@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Mouse & Keyboard Registry .REG File Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #00d4ff;
+            --secondary-purple: #7c3aed;
+            --dark-bg: #0f0f23;
+            --mid-dark-bg: #1a1a2e;
+            --light-dark-bg: #16213e;
+            --text-light: white;
+            --text-faded: rgba(255, 255, 255, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --gradient-1: linear-gradient(45deg, var(--primary-blue), var(--secondary-purple));
+            --gradient-2: linear-gradient(135deg, var(--dark-bg), var(--mid-dark-bg), var(--light-dark-bg));
+        }
+
+        /* Reset and Base styles from ShadowCore */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--gradient-2);
+            color: var(--text-light);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Custom scrollbar matching the ShadowCore aesthetic */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--mid-dark-bg);
+            border-radius: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--gradient-1);
+            border-radius: 6px;
+            border: 2px solid var(--mid-dark-bg);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, var(--secondary-purple), var(--primary-blue));
+        }
+
+        /* General Container and Card styles (adapted from ShadowCore) */
+        .container {
+            max-width: 800px;
+            background: var(--card-bg); /* Semi-transparent background */
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.8), 0 5px 10px -2px rgba(0, 0, 0, 0.2);
+            border-radius: 1rem;
+            backdrop-filter: blur(8px); /* Frosted glass effect */
+            border: 1px solid var(--border-color);
+        }
+
+        /* Input fields and Selects (adapted from ShadowCore) */
+        input[type="text"], input[type="password"], select {
+            border-color: var(--border-color);
+            background-color: rgba(255, 255, 255, 0.08); /* Slightly more opaque for input text clarity */
+            color: var(--text-light);
+            border-width: 1px;
+            padding: 0.65rem 1rem;
+            border-radius: 0.5rem;
+            outline: none;
+            transition: all 0.3s ease-in-out;
+            font-size: 1rem;
+        }
+        input[type="text"]:focus, input[type="password"]:focus, select:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.4); /* Glowing focus ring */
+            background-color: rgba(255, 255, 255, 0.12); /* Slightly lighter on focus */
+        }
+        input:disabled, select:disabled {
+            background-color: rgba(255, 255, 255, 0.03);
+            cursor: not-allowed;
+            color: var(--text-faded);
+            box-shadow: none;
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Headings (adapted from ShadowCore titles) */
+        h1 {
+            font-size: 2.5rem; /* Adjusted for app title */
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 12px rgba(0, 212, 255, 0.5); /* Stronger glow */
+            letter-spacing: -0.05em;
+            margin-bottom: 1.5rem; /* Adjusted margin */
+        }
+        h2 {
+            font-size: 1.8rem; /* Adjusted for section titles */
+            font-weight: 700;
+            color: var(--primary-blue); /* Primary blue for section titles */
+            margin-bottom: 1rem; /* Adjusted margin */
+            letter-spacing: -0.02em;
+        }
+        hr {
+            border-color: rgba(255, 255, 255, 0.15); /* Lighter border for hr */
+            margin: 2rem 0; /* More spacing for hr */
+        }
+
+        /* Status messages (adapted with gradient background) */
+        .status-message {
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-top: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            transform: translateY(10px);
+            position: relative; /* For pseudo-element glow */
+            overflow: hidden; /* For pseudo-element glow */
+        }
+        .status-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .status-message::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 0;
+        }
+        .status-message.show::before {
+             opacity: 0.2; /* Subtle glow when shown */
+        }
+        
+        .status-success {
+            background: linear-gradient(45deg, rgba(0, 150, 60, 0.8), rgba(0, 200, 80, 0.8)); /* Green gradient with transparency */
+            color: white;
+            border: 1px solid rgba(0, 230, 118, 0.6);
+        }
+        .status-error {
+            background: linear-gradient(45deg, rgba(180, 20, 20, 0.8), rgba(220, 50, 50, 0.8)); /* Red gradient with transparency */
+            color: white;
+            border: 1px solid rgba(244, 67, 54, 0.6);
+        }
+
+        /* Instructions section (adapted from ShadowCore card style) */
+        .instructions {
+            background: var(--card-bg); /* Use card background for consistency */
+            color: var(--text-light);
+            border-left: 5px solid var(--primary-blue); /* Blue accent border */
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin-top: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+        }
+        .instructions h3 {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+            color: var(--primary-blue);
+        }
+        .instructions ol {
+            list-style-type: decimal;
+            padding-left: 1.75rem;
+            color: var(--text-faded);
+        }
+        .instructions li {
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+        }
+        .warning-text {
+            color: #FFD700; /* Gold/yellow for warnings */
+            font-size: 0.95rem;
+            margin-top: 1rem;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+        p.text-faded, label.text-faded { /* Adjusted selector for consistency */
+            color: var(--text-faded); /* Use faded text color from root */
+            font-size: 1rem;
+        }
+
+        /* Buttons (adapted from ShadowCore CTA button) */
+        .generate-button {
+            display: inline-block;
+            background: var(--gradient-1);
+            color: var(--text-light);
+            padding: 1.2rem 2.5rem;
+            text-decoration: none;
+            border-radius: 999px; /* Pill shape */
+            font-weight: 700;
+            font-size: 1.15rem;
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.2);
+            border: none;
+            cursor: pointer;
+            letter-spacing: 0.025em;
+            text-transform: uppercase;
+        }
+        .generate-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3); /* Internal shine effect */
+            transition: left 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .generate-button:hover::before {
+            left: 100%;
+        }
+        .generate-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 212, 255, 0.4);
+        }
+        .generate-button:active {
+            transform: translateY(0);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Login screen specific styles (more intense blur and shadow) */
+        #login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: var(--gradient-2); /* Use base dark background gradient */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.6s ease-in-out; /* Slightly longer transition */
+        }
+        #login-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #login-container {
+            max-width: 400px;
+            background: rgba(26, 26, 46, 0.95); /* Slightly more opaque than main container */
+            box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.9), 0 10px 20px -4px rgba(0, 0, 0, 0.4); /* Stronger shadow */
+            border-radius: 1.25rem; /* More rounded */
+            padding: 3rem; /* More padding */
+            text-align: center;
+            backdrop-filter: blur(12px); /* Stronger blur for login */
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        #login-screen h2 {
+            color: var(--primary-blue);
+            margin-bottom: 2rem;
+            font-size: 2.8rem; /* Larger font for login title */
+            font-weight: 700;
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.6); /* Stronger glow */
+            letter-spacing: -0.05em;
+        }
+        #login-message {
+            margin-top: 1.5rem;
+            font-weight: 600;
+        }
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.8s ease-out; /* Longer fade for dramatic exit */
+        }
+        .fade-in {
+            opacity: 1;
+            transition: opacity 0.8s ease-in; /* Longer fade for dramatic entry */
+        }
+
+        /* Language Toggle Button Styles - Modified for always active look */
+        #language-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.05); /* Outer container background */
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(3px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3); /* Subtle shadow for the container */
+        }
+        #language-toggle button {
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem; /* Slightly rounded corners */
+            border: none;
+            background: transparent; /* Default transparent background */
+            color: var(--text-light);
+            font-weight: 700; /* Bold text */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: none; /* No shadow by default */
+            transform: scale(1.0);
+        }
+        #language-toggle button.active {
+            background: var(--gradient-1); /* Active gradient */
+            box-shadow: 0 2px 8px rgba(0, 212, 255, 0.2); /* Subtle glow for active button */
+            transform: scale(1.05); /* Slightly scaled up for active button */
+        }
+        #language-toggle button:not(.active):hover {
+            opacity: 0.8; /* Slight dim on hover for inactive */
+            background-color: rgba(255, 255, 255, 0.1); /* Subtle background for inactive hover */
+        }
+        #language-toggle button.active:hover {
+            opacity: 0.9; /* Slight dim on hover for active */
+            transform: scale(1.03); /* Slight scale down on hover for "pressed" feel */
+            box-shadow: 0 4px 10px rgba(0, 212, 255, 0.3); /* More prominent shadow on hover for active */
+        }
+        #language-toggle button:active {
+            transform: scale(1.02); /* Even smaller on click */
+            box-shadow: 0 1px 5px rgba(0, 212, 255, 0.1);
+        }
+
+        /* Responsive Adjustments - keep original ones as well */
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 0.75rem;
+                padding: 1.5rem;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+            .generate-button {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+            }
+            #login-container {
+                padding: 2rem;
+                border-radius: 1rem;
+            }
+            #login-screen h2 {
+                font-size: 2rem;
+            }
+            .instructions {
+                padding: 1rem;
+                border-radius: 0.75rem;
+            }
+            #language-toggle button {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+            #language-toggle button.active { /* Adjust scale for smaller screens */
+                transform: scale(1.0); 
+            }
+            #language-toggle button.active:hover {
+                transform: scale(1.03); /* Maintain slight hover effect */
+            }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div id="login-screen">
+        <div id="login-container" class="space-y-6">
+            <h2 id="loginTitle">Login</h2>
+            <div id="language-toggle-login">
+                <button id="lang-en-login" class="active">English</button>
+                <button id="lang-si-login">සිංහල</button>
+            </div>
+            <div>
+                <label for="username" class="sr-only" id="usernameLabel">Username (Email)</label>
+                <input type="text" id="username" placeholder="Username (Email)" class="w-full">
+            </div>
+            <div>
+                <label for="password" class="sr-only" id="passwordLabel">Password</label>
+                <input type="password" id="password" placeholder="Password" class="w-full">
+            </div>
+            <div id="admin-key-field" class="hidden">
+                <label for="adminKey" class="sr-only" id="adminKeyLabel">Admin Key</label>
+                <input type="password" id="adminKey" placeholder="Admin Key" class="w-full">
+            </div>
+            <button id="loginBtn" class="w-full generate-button">Login</button>
+            <button id="showRegisterBtn" class="w-full generate-button mt-2">Register</button>
+            <p id="login-message" class="status-message"></p>
+        </div>
+    </div>
+
+    <div id="main-app-screen" class="container p-8 space-y-6 hidden">
+        <h1 id="mainAppTitle" class="text-center">මවුස් හා කීබෝඩ් Registry .REG File Generator</h1>
+
+        <div id="language-toggle">
+            <button id="lang-en" class="active">English</button>
+            <button id="lang-si">සිංහල</button>
+        </div>
+
+        <p class="text-sm text-center text-faded" id="mainAppDescription">
+            ඔබට අවශ්‍ය සැකසුම් ඇතුළත් කරන්න. "Generate & Download .REG File" බොත්තම එබූ පසු, ෆයිල් එකක් download වනු ඇත. 
+            එය download කරගත් පසු, එම ෆයිල් එක Windows මත **Administrator ලෙස run කිරීමට අවශ්‍යයි**.
+        </p>
+        <hr>
+
+        <div id="settings-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h2 class="col-span-full text-center" id="generalMouseSettingsTitle">සාමාන්‍ය මවුස් සැකසුම්</h2>
+            <div class="flex flex-col">
+                <label for="activeWindowTracking" class="font-medium mb-1 text-faded" id="label_activeWindowTracking">ActiveWindowTracking (dword: 0/1)</label>
+                <input type="text" id="activeWindowTracking" value="0" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="beep" class="font-medium mb-1 text-faded" id="label_beep">Beep (string: Yes/No)</label>
+                <input type="text" id="beep" value="No" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="doubleClickHeight" class="font-medium mb-1 text-faded" id="label_doubleClickHeight">DoubleClickHeight (string)</label>
+                <input type="text" id="doubleClickHeight" value="4" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="doubleClickSpeed" class="font-medium mb-1 text-faded" id="label_doubleClickSpeed">DoubleClickSpeed (string, e.g., 550)</label>
+                <input type="text" id="doubleClickSpeed" value="550" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="doubleClickWidth" class="font-medium mb-1 text-faded" id="label_doubleClickWidth">DoubleClickWidth (string)</label>
+                <input type="text" id="doubleClickWidth" value="4" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="extendedSounds" class="font-medium mb-1 text-faded" id="label_extendedSounds">ExtendedSounds (string: Yes/No)</label>
+                <input type="text" id="extendedSounds" value="No" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="mouseHoverHeight" class="font-medium mb-1 text-faded" id="label_mouseHoverHeight">MouseHoverHeight (string)</label>
+                <input type="text" id="mouseHoverHeight" value="4" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="mouseHoverTime" class="font-medium mb-1 text-faded" id="label_mouseHoverTime">MouseHoverTime (string, milliseconds)</label>
+                <input type="text" id="mouseHoverTime" value="400" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="mouseHoverWidth" class="font-medium mb-1 text-faded" id="label_mouseHoverWidth">MouseHoverWidth (string)</label>
+                <input type="text" id="mouseHoverWidth" value="4" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="mouseSensitivity" class="font-medium mb-1 text-faded" id="label_mouseSensitivity">MouseSensitivity (string, e.g., 1-20)</label>
+                <input type="text" id="mouseSensitivity" value="6" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="mouseSpeed" class="font-medium mb-1 text-faded" id="label_mouseSpeed">MouseSpeed (string, e.g., 0-2)</label>
+                <input type="text" id="mouseSpeed" value="0" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="mouseThreshold1" class="font-medium mb-1 text-faded" id="label_mouseThreshold1">MouseThreshold1 (string)</label>
+                <input type="text" id="mouseThreshold1" value="0" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="mouseThreshold2" class="font-medium mb-1 text-faded" id="label_mouseThreshold2">MouseThreshold2 (string)</label>
+                <input type="text" id="mouseThreshold2" value="0" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="mouseTrails" class="font-medium mb-1 text-faded" id="label_mouseTrails">MouseTrails (string: 0-7, 0=Off)</label>
+                <input type="text" id="mouseTrails" value="0" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="snapToDefaultButton" class="font-medium mb-1 text-faded" id="label_snapToDefaultButton">SnapToDefaultButton (string: 0/1)</label>
+                <input type="text" id="snapToDefaultButton" value="0" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="swapMouseButtons" class="font-medium mb-1 text-faded" id="label_swapMouseButtons">SwapMouseButtons (string: 0/1)</label>
+                <input type="text" id="swapMouseButtons" value="0" class="w-full">
+            </div>
+
+            <div class="flex flex-col md:col-span-2">
+                <p class="warning-text" id="warningText1">
+                    **සැ.යු.: පහත දැක්වෙන Keys සාමාන්‍යයෙන් Mouse Registry Path එකට (HKEY_CURRENT_USER\Control Panel\Mouse) අදාළ නොවේ. 
+                    ඒවා මෙම ස්ථානයේ එකතු කිරීමෙන් අපේක්ෂිත ක්‍රියාකාරීත්වය සිදු නොවීමට හෝ අනවශ්‍ය ගැටළු ඇතිවීමට ඉඩ ඇත.**
+                </p>
+            </div>
+            <div class="flex flex-col">
+                <label for="tcpWindowSize" class="font-medium mb-1 text-faded" id="label_tcpWindowSize">TcpWindowSize (dword: Hex value)</label>
+                <input type="text" id="tcpWindowSize" value="0005ae4c" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="tcpNoDelay" class="font-medium mb-1 text-faded" id="label_tcpNoDelay">TcpNoDelay (hex: comma separated hex values)</label>
+                <input type="text" id="tcpNoDelay" value="7f,14,00,00,00,00,00,00" class="w-full">
+                <p class="text-xs mt-1 text-faded" id="tcpNoDelayExample">
+                    Ex: 7f,14,00,00,00,00,00,00
+                </p>
+            </div>
+            <div class="flex flex-col">
+                <label for="tcpDelAckTicks" class="font-medium mb-1 text-faded" id="label_tcpDelAckTicks">TCPDelAckTicks (dword: Hex value)</label>
+                <input type="text" id="tcpDelAckTicks" value="00000004" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="tcp1323Opts" class="font-medium mb-1 text-faded" id="label_tcp1323Opts">Tcp1323Opts (dword: Hex value)</label>
+                <input type="text" id="tcp1323Opts" value="00000004" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="tcpMaxDataRetransmissions" class="font-medium mb-1 text-faded" id="label_tcpMaxDataRetransmissions">TcpMaxDataRetransmissions (dword: Hex value)</label>
+                <input type="text" id="tcpMaxDataRetransmissions" value="00000003" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="sackOpts" class="font-medium mb-1 text-faded" id="label_sackOpts">SackOpts (dword: Hex value)</label>
+                <input type="text" id="sackOpts" value="00000001" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="defaultTTL" class="font-medium mb-1 text-faded" id="label_defaultTTL">DefaultTTL (dword: Hex value)</label>
+                <input type="text" id="defaultTTL" value="00007fff" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="beep2" class="font-medium mb-1 text-faded" id="label_beep2">Beep2 (string: Yes/No)</label>
+                <input type="text" id="beep2" value="No" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="enablePMTUDiscovery" class="font-medium mb-1 text-faded" id="label_enablePMTUDiscovery">EnablePMTUDiscovery (dword: Hex value)</label>
+                <input type="text" id="enablePMTUDiscovery" value="00000001" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="enablePMTUBHDetect" class="font-medium mb-1 text-faded" id="label_enablePMTUBHDetect">EnablePMTUBHDetect (dword: Hex value)</label>
+                <input type="text" id="enablePMTUBHDetect" value="00000001" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="doubleClickHeight2" class="font-medium mb-1 text-faded" id="label_doubleClickHeight2">DoubleClickHeight2 (string)</label>
+                <input type="text" id="doubleClickHeight2" value="0,5" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="doubleClickSpeed2" class="font-medium mb-1 text-faded" id="label_doubleClickSpeed2">DoubleClickSpeed2 (string)</label>
+                <input type="text" id="doubleClickSpeed2" value="0,47" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="doubleClickWidth2" class="font-medium mb-1 text-faded" id="label_doubleClickWidth2">DoubleClickWidth2 (string)</label>
+                <input type="text" id="doubleClickWidth2" value="0,5" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="extendedSounds2" class="font-medium mb-1 text-faded" id="label_extendedSounds2">ExtendedSounds2 (string: Yes/No)</label>
+                <input type="text" id="extendedSounds2" value="No" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="mouseSensibility2" class="font-medium mb-1 text-faded" id="label_mouseSensibility2">MouseSensibility2 (string)</label>
+                <input type="text" id="mouseSensibility2" value="0" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="mouseSpeed2" class="font-medium mb-1 text-faded" id="label_mouseSpeed2">MouseSpeed2 (string)</label>
+                <input type="text" id="mouseSpeed2" value="0" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="mouseThreshold12" class="font-medium mb-1 text-faded" id="label_mouseThreshold12">MouseThreshold12 (string)</label>
+                <input type="text" id="mouseThreshold12" value="3" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="mouseThreshold22" class="font-medium mb-1 text-faded" id="label_mouseThreshold22">MouseThreshold22 (string)</label>
+                <input type="text" id="mouseThreshold22" value="4" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="activeFix" class="font-medium mb-1 text-faded" id="label_activeFix">ActiveFix (string)</label>
+                <input type="text" id="activeFix" value="G@ku" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="activeAC" class="font-medium mb-1 text-faded" id="label_activeAC">ActiveAC (string)</label>
+                <input type="text" id="activeAC" value="G@ku" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="activeDevoloped" class="font-medium mb-1 text-faded" id="label_activeDevoloped">ActiveDevoloped (string)</label>
+                <input type="text" id="activeDevoloped" value="G@ku" class="w-full">
+            </div>
+            <div class="flex flex-col">
+                <label for="active" class="font-medium mb-1 text-faded" id="label_active">Active (string)</label>
+                <input type="text" id="active" value="G@ku" class="w-full">
+            </div>
+
+            <div class="flex flex-col md:col-span-2">
+                <div class="flex items-center mb-2">
+                    <input type="checkbox" id="enableSmoothCurvePresets" class="mr-2">
+                    <label for="enableSmoothCurvePresets" class="font-medium text-faded" id="label_enableSmoothCurvePresets">SmoothMouseX/YCurve Presets (යුගල වශයෙන්) REG ෆයිල් එකට ඇතුළත් කරන්න</label>
+                </div>
+                <p class="text-xs mt-1 warning-text" id="warningText2">
+                    **සැ.යු.: මෙම අගයන් සංකීර්ණ Binary දත්ත වන අතර, වැරදි ලෙස වෙනස් කළහොත් මවුස් හැසිරීමට බලපෑම් ඇති විය හැක. ඔබ තෝරාගන්නා විට ප්‍රවේශම් වන්න. මෙම විකල්පය අක්‍රිය කළහොත් REG ෆයිල් එකට අගයන් එකතු නොවේ.**
+                </p>
+            </div>
+
+            <div class="flex flex-col md:col-span-2">
+                <label for="smoothCurvePreset" class="font-medium mb-1 text-faded" id="label_smoothCurvePreset">SmoothMouseX/YCurve Preset (Binary)</label>
+                <select id="smoothCurvePreset" class="w-full" disabled>
+                    <option value="" id="curvePreset0">Select a preset or leave blank</option>
+                    <option id="curvePreset1" value='{"x": "00,00,00,00,00,00,00,00,15,6e,00,00,00,00,00,00,00,40,01,00,00,00,00,00,29,dc,03,00,00,00,00,00,00,00,28,00,00,00,00,00", "y": "00,00,00,00,00,00,00,00,fd,11,01,00,00,00,00,00,00,24,04,00,00,00,00,00,00,fc,12,00,00,00,00,00,00,c0,bb,01,00,00,00,00"}'>1: Default Curve (X & Y)</option>
+                    <option id="curvePreset2" value='{"x": "00,00,00,00,00,00,00,00,00,a0,00,00,00,00,00,00,00,40,01,00,00,00,00,00,00,80,02,00,00,00,00,00,00,00,05,00,00,00,00,00", "y": "00,00,00,00,00,00,00,00,66,a6,02,00,00,00,00,00,cd,4c,05,00,00,00,00,00,a0,99,0a,00,00,00,00,00,38,33,15,00,00,00,00,00"}'>2: No Acceleration (X & Y)</option>
+                    <option id="curvePreset3" value='{"x": "65,ef,4f,d4,df,f0,77,69,90,36,37,35,36,35,39,36,39,36,36,2d,5b,70,34,35,72,34,35,74,72,79,65,72,72,67,6c,6f,7e,b4,5d,3d,5d,2d,5d,5b,6f,69,75,75,72,74,65,72,66,74,68,79,37,75,35,5d,5b,3d,2d,5d,f3,b4,7e,70,e7,6f,70,7e,e7,e7,f5,70,7e,e7,6c,e7,7e,70,b4,5d,5b,5d,2d,70,70,68,67,66,74,65,65,64,72,77,77,00,00,00,00,00,00,00,00,00,a0,00,00,00,00,00,00,00,40,01,00,00,00,00,00,00,80,02,00,00,00,00,00,00,00,05,00,00,00,00,00", "y": "66,6f,76,33,35,33,65,36,64,73,36,79,64,75,63,33,37,33,63,72,34,72,67,35,66,66,98,09,00,00,00,00,00,00,00,00,00,00,00,00,dd,dd,ee,f4,f0,00,00,03,34,00,00,00,00,00,00,00,00,00,00,00,00,00,00,35,79,37,69,69,38,6f,70,b4,e7,b4,3d,e7,e7,70,3d,7e,b4,e7,3b,3d,e7,3b,7e,3d,b4,e7,7e,3d,b4,e7,7e,b4,3d,77,73,66,75,64,75,68,66,64,67,66,7e,7e,5b,5d,5b,73,64,66,67,6a,67,75,67,66,74,67,67,66,79,37,79,37,64,66,67,66,37,74,66,5d,5d,7e,b4,00,00,00,00,00,00,05,00,00,00,00,00,00,00,00,0f,00,00,00,00,00,00,00,05,f0,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,66,a6,02,00,00,00,00,00,cd,4c,05,00,00,00,00,00,a0,99,0a,00,00,00,00,00,38,33,15,00,00,00,00,00"}'>3: Custom Curve Set 1</option>
+                    <option id="curvePreset4" value='{"x": "00,00,00,00,00,00,00,00,c0,cc,0c,00,00,00,00,00,80,99,19,00,00,00,00,00,40,66,26,00,00,00,00,00,00,33,33,00,00,00,00,00", "y": "00,00,00,00,00,00,00,00,00,00,38,00,00,00,00,00,00,00,70,00,00,00,00,00,00,00,a8,00,00,00,00,00,00,00,e0,00,00,00,00,00"}'>4: Custom Curve Set 2</option>
+                    <option id="curvePreset5" value='{"x": "9e,00,fa,00,a4,00,a3,00,ac,00,8f,00,a0,00,99,00,99,00,b1,00,89,00,f1,00,81,00,8c,00,8d,00,fd,00,85,00,a2,00,89,00,ff,00,8b,00,a4,00,ac,00,b8,00,92,00,80,00,9a,00,a7,00,9e,00,a3,00,f8,00,af,00,98,00,9b,00,89,00,b0,00,86,00,a2,00,89,00,bf,00,87,00,bf,00,b8,00,9c,00,92,00,9f,00,fd,00,b2,00,a9,00,90,00,9a,00,b8,00,ac,00,a5,00,a4,00,f8,00,ad,00,9b,00,89,00,f1,00,81,00,8c,00,ab,00,bd,00,85,00,a2,00,bb,00,83,00,9a,00,a5,00,f1,00,fa,00,84,00,a4,00,92,00,a0,00,aa,00,80,00,9e,00,a4,00,81,00,8c,00,f8,00,af,00,85,00,9c,00,ab,00,bf,00,87,00,bf,00,f5,00,f5,00'}'>5: Custom Curve Set 3</option>
+                    <option id="curvePreset6" value='{"x": "7b,22,44,50,49,22,20,3d,20,22,35,30,30,22,20,22,52,61,74,65,22,20,3d,20,22,31,30,30,30,22,20,22,52,65,73,6f,6c,75,74,69,6f,6e,22,20,3d,20,22,31,39,32,30,22,20,22,50,68,79,73,69,63,61,6c,52,65,73,6f,6c,75,74,69,6f,6e,22,20,3d,20,22,31,39,32,30,22,20,22,41,78,69,73,53,65,6e,73,69,74,69,76,69,74,79,22,20,3d,20,22,7d,3b", "y": "7b,22,44,50,49,22,20,3d,20,22,34,34,30,22,20,22,52,61,74,65,22,20,3d,20,22,39,30,22,20,22,52,61,74,65,22,20,3d,20,22,39,30,22,20,22,52,65,73,6f,6c,75,74,69,6f,6e,22,20,3d,20,22,31,30,38,30,22,20,22,50,68,79,73,69,63,61,6c,52,65,73,6f,6c,75,74,69,6f,6e,22,20,3d,20,22,31,30,38,30,22,20,22,41,78,69,73,53,65,6e,73,69,74,69,76,69,74,79,22,20,3d,20,22,30,2e,38,22,20,22,4c,69,6e,65,61,72,46,6f,76,22,20,3d,20,22,31,22,7d,3b"}'>6: Custom Curve Set 4</option>
+                </select>
+            </div>
+
+            <div class="flex flex-col md:col-span-2 mt-6">
+                <hr>
+                <h2 class="text-center" id="additionalSmoothCurveTitle">අමතර Custom Smooth Curve (X & Y)</h2>
+                <div class="flex items-center mb-2">
+                    <input type="checkbox" id="enableAdditionalSmoothCurve" class="mr-2">
+                    <label for="enableAdditionalSmoothCurve" class="font-medium text-faded" id="label_enableAdditionalSmoothCurve">අමතර Custom Smooth Curve අගයන් REG ෆයිල් එකට ඇතුළත් කරන්න</label>
+                </div>
+                <p class="text-xs mt-1 warning-text" id="warningText3">
+                    **මෙම අගයන් තනිව ඇතුළත් කිරීමෙන් හෝ වැරදි අගයන් ඇතුළත් කිරීමෙන් මවුස් හැසිරීමට දැඩි බලපෑම් ඇති විය හැක. ඔබ දන්නේ නම් පමණක් භාවිතා කරන්න.**
+                </p>
+            </div>
+            <div class="flex flex-col">
+                <label for="additionalSmoothMouseXCurve" class="font-medium mb-1 text-faded" id="label_additionalSmoothMouseXCurve">අමතර SmoothMouseXCurve (Binary)</label>
+                <select id="additionalSmoothMouseXCurve" class="w-full" disabled>
+                    <option value="" id="additionalCurveXOption0">Select a preset or leave blank</option>
+                    <option value="00,00,00,00,00,00,00,00,15,6e,00,00,00,00,00,00,00,40,01,00,00,00,00,00,29,dc,03,00,00,00,00,00,00,00,28,00,00,00,00,00" id="additionalCurveXOption1">1: Default Curve X</option>
+                    <option value="00,00,00,00,00,00,00,00,00,a0,00,00,00,00,00,00,00,40,01,00,00,00,00,00,00,80,02,00,00,00,00,00,00,00,05,00,00,00,00,00" id="additionalCurveXOption2">2: No Acceleration X</option>
+                    <option value="65,ef,4f,d4,df,f0,77,69,90,36,37,35,36,35,39,36,39,36,36,2d,5b,70,34,35,72,34,35,74,72,79,65,72,72,67,6c,6f,7e,b4,5d,3d,5d,2d,5d,5b,6f,69,75,75,72,74,65,72,66,74,68,79,37,75,35,5d,5b,3d,2d,5d,f3,b4,7e,70,e7,6f,70,7e,e7,e7,f5,70,7e,e7,6c,e7,7e,70,b4,5d,5b,5d,2d,70,70,68,67,66,74,65,65,64,72,77,77,00,00,00,00,00,00,00,00,00,a0,00,00,00,00,00,00,00,40,01,00,00,00,00,00,00,80,02,00,00,00,00,00,00,00,05,00,00,00,00,00" id="additionalCurveXOption3">3: Custom Curve X 1</option>
+                    <option value="00,00,00,00,00,00,00,00,c0,cc,0c,00,00,00,00,00,80,99,19,00,00,00,00,00,40,66,26,00,00,00,00,00,00,33,33,00,00,00,00,00" id="additionalCurveXOption4">4: Custom Curve X 2</option>
+                    <option value="9e,00,fa,00,a4,00,a3,00,ac,00,8f,00,a0,00,99,00,99,00,b1,00,89,00,f1,00,81,00,8c,00,8d,00,fd,00,85,00,a2,00,89,00,ff,00,8b,00,a4,00,ac,00,b8,00,92,00,80,00,9a,00,a7,00,9e,00,a3,00,f8,00,af,00,98,00,9b,00,89,00,b0,00,86,00,a2,00,89,00,bf,00,87,00,bf,00,b8,00,9c,00,92,00,9f,00,fd,00,b2,00,a9,00,90,00,9a,00,b8,00,ac,00,a5,00,a4,00,f8,00,ad,00,9b,00,89,00,f1,00,81,00,8c,00,ab,00,bd,00,85,00,a2,00,bb,00,83,00,9a,00,a5,00,f1,00,fa,00,84,00,a4,00,92,00,a0,00,aa,00,80,00,9e,00,a4,00,81,00,8c,00,f8,00,af,00,85,00,9c,00,ab,00,bf,00,87,00,bf,00,f5,00,f5,00" id="additionalCurveXOption5">5: Custom Curve X 3</option>
+                    <option value="7b,22,44,50,49,22,20,3d,20,22,35,30,30,22,20,22,52,61,74,65,22,20,3d,20,22,31,30,30,30,22,20,22,52,65,73,6f,6c,75,74,69,6f,6e,22,20,3d,20,22,31,39,32,30,22,20,22,50,68,79,73,69,63,61,6c,52,65,73,6f,6c,75,74,69,6f,6e,22,20,3d,20,22,31,39,32,30,22,20,22,41,78,69,73,53,65,6e,73,69,74,69,76,69,74,79,22,20,3d,20,22,7d,3b" id="additionalCurveXOption6">6: Custom Curve X 4</option>
+                </select>
+            </div>
+            <div class="flex flex-col">
+                <label for="additionalSmoothMouseYCurve" class="font-medium mb-1 text-faded" id="label_additionalSmoothMouseYCurve">අමතර SmoothMouseYCurve (Binary)</label>
+                <select id="additionalSmoothMouseYCurve" class="w-full" disabled>
+                    <option value="" id="additionalCurveYOption0">Select a preset or leave blank</option>
+                    <option value="00,00,00,00,00,00,00,00,fd,11,01,00,00,00,00,00,00,24,04,00,00,00,00,00,00,fc,12,00,00,00,00,00,00,c0,bb,01,00,00,00,00" id="additionalCurveYOption1">1: Default Curve Y</option>
+                    <option value="00,00,00,00,00,00,00,00,66,a6,02,00,00,00,00,00,cd,4c,05,00,00,00,00,00,a0,99,0a,00,00,00,00,00,38,33,15,00,00,00,00,00" id="additionalCurveYOption2">2: No Acceleration Y</option>
+                    <option value="66,6f,76,33,35,33,65,36,64,73,36,79,64,75,63,33,37,33,63,72,34,72,67,35,66,66,98,09,00,00,00,00,00,00,00,00,00,00,00,00,dd,dd,ee,f4,f0,00,00,03,34,00,00,00,00,00,00,00,00,00,00,00,00,00,00,35,79,37,69,69,38,6f,70,b4,e7,b4,3d,e7,e7,70,3d,7e,b4,e7,3b,3d,e7,3b,7e,3d,b4,e7,7e,3d,b4,e7,7e,b4,3d,77,73,66,75,64,75,68,66,64,67,66,7e,7e,5b,5d,5b,73,64,66,67,6a,67,75,67,66,74,67,67,66,79,37,79,37,64,66,67,66,37,74,66,5d,5d,7e,b4,00,00,00,00,00,00,05,00,00,00,00,00,00,00,00,0f,00,00,00,00,00,00,00,05,f0,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,66,a6,02,00,00,00,00,00,cd,4c,05,00,00,00,00,00,a0,99,0a,00,00,00,00,00,38,33,15,00,00,00,00,00" id="additionalCurveYOption3">3: Custom Curve Y 1</option>
+                    <option value="00,00,00,00,00,00,00,00,00,00,38,00,00,00,00,00,00,00,70,00,00,00,00,00,00,00,a8,00,00,00,00,00,00,00,e0,00,00,00,00,00" id="additionalCurveYOption4">4: Custom Curve Y 2</option>
+                    <option value="9b,00,8f,00,9e,00,b8,00,92,00,fa,00,a0,00,f8,00,9d,00,8d,00,85,00,af,00,98,00,9b,00,89,00,b0,00,85,00,8c,00,af,00,bf,00,87,00,bf,00,b8,00,81,00,92,00,9f,00,a4,00,a6,00,a9,00,80,00,9a,00,9f,00,9c,00,9b,00,89,00,f1,00,81,00,8c,00,a3,00,bf,00,85,00,8c,00,bb,00,83,00,9d,00,fa,00,9e,00,bd,00,ab,00,fa,00,a4,00,f8,00,a9,00,90,00,92,00,b8,00,ac,00,80,00,a3,00,af,00,98,00,9b,00,89,00,f9,00,84,00,a2,00,81,00,ff,00,8b,00,a3,00,92,00,be,00,ac,00,a1,00,fd,00,9f,00,91,00,9f,00,b0,00,f9,00,92,00,9b,00,89,00,f1,00,81,00,8c,00,8d,00,b0,00,85,00,8c,00,bb,00,f5,00" id="additionalCurveYOption5">5: Custom Curve Y 3</option>
+                    <option value="7b,22,44,50,49,22,20,3d,20,22,34,34,30,22,20,22,52,61,74,65,22,20,3d,20,22,39,30,22,20,22,52,61,74,65,22,20,3d,20,22,39,30,22,20,22,52,65,73,6f,6c,75,74,69,6f,6e,22,20,3d,20,22,31,30,38,30,22,20,22,50,68,79,73,69,63,61,6c,52,65,73,6f,6c,75,74,69,6f,6e,22,20,3d,20,22,31,30,38,30,22,20,22,41,78,69,73,53,65,6e,73,69,74,69,76,69,74,79,22,20,3d,20,22,30,2e,38,22,20,22,4c,69,6e,65,61,72,46,6f,76,22,20,3d,20,22,31,22,7d,3b" id="additionalCurveYOption6">6: Custom Curve Y 4</option>
+                </select>
+            </div>
+            </div>
+
+        <div class="flex flex-col mt-4">
+            <label for="customFilename" class="font-medium mb-1 text-faded" id="label_customFilename">ප්‍රධාන සැකසුම් ෆයිල් නාමය (.reg දිගුව සමඟ හෝ නැතිව):</label>
+            <input type="text" id="customFilename" placeholder="උදා: my_mouse_settings" class="w-full">
+        </div>
+
+        <button id="generateBtn" class="w-full generate-button">
+            සියලු සාමාන්‍ය සැකසුම් සහිත .REG ෆයිල් එක සාදන්න සහ Download කරන්න
+        </button>
+
+        <p id="statusMessage" class="status-message"></p>
+
+        <hr>
+        <div id="mouse-delay-fix-section" class="space-y-6">
+            <h2 class="text-center" id="mouseDelayFixTitle">Mouse Delay Fix (No Acceleration)</h2>
+            <p class="text-sm text-center text-faded" id="mouseDelayFixDescription">
+                මෙම බොත්තම මඟින් Windows Mouse Acceleration අක්‍රිය කරනු ලබන Registry සැකසුමක් Generate කරනු ඇත. 
+                <span class="warning-text block mt-2" id="mouseDelayFixWarning">
+                    **සැ.යු.: මෙම සැකසුම සාමාන්‍යයෙන් මවුස් Registry Path එකටම අදාළ නොවේ. එය මෙම ස්ථානයේ එකතු කිරීමෙන් අපේක්ෂිත ක්‍රියාකාරීත්වය සිදු නොවීමට හෝ අනවශ්‍ය ගැටළු ඇතිවීමට ඉඩ ඇත.**
+                </span>
+            </p>
+            <div class="flex flex-col mt-4">
+                <label for="customDelayFixFilename" class="font-medium mb-1 text-faded" id="label_customDelayFixFilename">Mouse Delay Fix ෆයිල් නාමය (.reg දිගුව සමඟ හෝ නැතිව):</label>
+                <input type="text" id="customDelayFixFilename" placeholder="උදා: mouse_no_accel" class="w-full">
+            </div>
+
+            <button id="generateDelayFixBtn" class="w-full generate-button">
+                මවුස් ප්‍රමාදය නිවැරදි කිරීමේ .REG ෆයිල් එක සාදන්න සහ Download කරන්න
+            </button>
+
+            <p id="delayFixStatusMessage" class="status-message"></p>
+        </div>
+
+        <hr>
+        <div id="keyboard-delay-fix-section" class="space-y-6">
+            <h2 class="text-center" id="keyboardDelayFixTitle">Keyboard Delay Fix (Fast Response)</h2>
+            <p class="text-sm text-center text-faded" id="keyboardDelayFixDescription">
+                මෙම බොත්තම මඟින් Keyboard Repeat Delay සහ Repeat Rate උපරිම වේගයට සකසන Registry සැකසුමක් Generate කරනු ඇත.
+                <span class="warning-text block mt-2" id="keyboardDelayFixWarning">
+                    **සැ.යු.: මෙම සැකසුම් සාමාන්‍යයෙන් Keyboard Registry Path එකටම අදාළ නොවේ. ඒවා මෙම ස්ථානයේ එකතු කිරීමෙන් අපේක්ෂිත ක්‍රියාකාරීත්වය සිදු නොවීමට හෝ අනවශ්‍ය ගැටළු ඇතිවීමට ඉඩ ඇත.**
+                </span>
+            </p>
+            <div class="flex flex-col mt-4">
+                <label for="customKeyboardDelayFixFilename" class="font-medium mb-1 text-faded" id="label_customKeyboardDelayFixFilename">Keyboard Delay Fix ෆයිල් නාමය (.reg දිගුව සමඟ හෝ නැතිව):</label>
+                <input type="text" id="customKeyboardDelayFixFilename" placeholder="උදා: keyboard_fast_response" class="w-full">
+            </div>
+
+            <button id="generateKeyboardDelayFixBtn" class="w-full generate-button">
+                කීබෝඩ් ප්‍රමාදය නිවැරදි කිරීමේ .REG ෆයිල් එක සාදන්න සහ Download කරන්න
+            </button>
+
+            <p id="keyboardDelayFixStatusMessage" class="status-message"></p>
+        </div>
+
+        <hr>
+        <div class="instructions mt-6">
+            <h3 id="instructionsTitle">Download කිරීමෙන් පසු ඇතිවන ගැටළු නිරාකරණය කරගැනීමට:</h3>
+            <p class="mb-2" id="instructionsParagraph1">ඔබ `.reg` ෆයිල් එකක් download කරන විට, Windows මගින් එය ආරක්ෂක හේතු මත අවහිර කළ හැක. එය සාර්ථකව run කරගැනීමට පහත පියවර අනුගමනය කරන්න:</p>
+            <ol>
+                <li id="instructionStep1">Download කරගත් `.reg` ෆයිල් එක තිබෙන ෆෝල්ඩරයට යන්න. (සාමාන්‍යයෙන් "Downloads" ෆෝල්ඩරය)</li>
+                <li id="instructionStep2">ෆයිල් එක මත **Right-click** කරන්න.</li>
+                <li id="instructionStep3">`Properties` තෝරන්න.</li>
+                <li id="instructionStep4">`General` tab එක යටතේ, `Security` කොටසේ "This file came from another computer and might be blocked..." යනුවෙන් සඳහන් වූ තැනක **"Unblock"** යනුවෙන් සලකුණු කොටුවක් (checkbox) ඇත. එය **ටික්** කර `Apply` සහ `OK` කරන්න.</li>
+                <li id="instructionStep5">ෆයිල් එක `Unblock` කළ පසු, නැවත එම ෆයිල් එක මත **Right-click** කර **"Merge"** (ඒකාබද්ධ කරන්න) විකල්පය තෝරන්න.</li>
+                <li id="instructionStep6">Registry එකට වෙනස්කම් සිදු කිරීමට අවසර ඉල්ලන විට **Yes** හෝ **Run as administrator** දෙන්න.</li>
+            </ol>
+            <p class="text-sm mt-3" id="instructionsParagraph2">මෙම පියවර මගින් ඔබට Registry Settings සාර්ථකව යාවත්කාලීන කර ගැනීමට හැකි වනු ඇත.</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Supabase Configuration (REPLACE WITH YOUR ACTUAL DETAILS)
+        const SUPABASE_URL = 'https://tksnqkkzevtvyhholxmz.supabase.co'; // e.g., 'https://abcde12345.supabase.co'
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrc25xa2t6ZXZ0dnloaG9seG16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3MDkyOTUsImV4cCI6MjA2NjI4NTI5NX0.LpOKkc_i2fkpftK7VERGuIBpyu0HUUNST3iCkWvJgf8'; // e.g., 'eyJhbGciOiJIUzI1Ni...'
+
+        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const ADMIN_KEY = 'g@ku_x1717'; // Admin key for registration
+
+        const loginScreen = document.getElementById('login-screen');
+        const mainAppScreen = document.getElementById('main-app-screen');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const adminKeyField = document.getElementById('admin-key-field');
+        const adminKeyInput = document.getElementById('adminKey');
+        const loginBtn = document.getElementById('loginBtn');
+        const showRegisterBtn = document.getElementById('showRegisterBtn'); // New button for registration toggle
+        const loginMessage = document.getElementById('login-message');
+
+        const langEnBtn = document.getElementById('lang-en');
+        const langSiBtn = document.getElementById('lang-si');
+        const langEnLoginBtn = document.getElementById('lang-en-login'); // New language buttons for login screen
+        const langSiLoginBtn = document.getElementById('lang-si-login');
+
+        let isRegisterMode = false; // To track if we are in registration mode
+
+        // --- Translations Object ---
+        const translations = {
+            // Login Screen
+            loginTitle: {
+                en: "Login",
+                si: "පිවිසෙන්න"
+            },
+            registerTitle: { // New translation key for register
+                en: "Register",
+                si: "ලියාපදිංචි වන්න"
+            },
+            usernameLabel: {
+                en: "Username (Email)", 
+                si: "පරිශීලක නාමය (ඊමේල්)"
+            },
+            passwordLabel: {
+                en: "Password", 
+                si: "මුරපදය"
+            },
+            adminKeyLabel: { // New translation key for admin key
+                en: "Admin Key",
+                si: "පරිපාලක යතුර"
+            },
+            usernamePlaceholder: { // Custom key for placeholder
+                en: "Username (Email)",
+                si: "පරිශීලක නාමය (ඊමේල්)"
+            },
+            passwordPlaceholder: { // Custom key for placeholder
+                en: "Password",
+                si: "මුරපදය"
+            },
+            adminKeyPlaceholder: { // New translation key for admin key placeholder
+                en: "Admin Key",
+                si: "පරිපාලක යතුර"
+            },
+            loginBtn: {
+                en: "Login",
+                si: "පිවිසෙන්න"
+            },
+            registerBtn: { // New translation key for register button
+                en: "Register",
+                si: "ලියාපදිංචි වන්න"
+            },
+            showRegisterBtn: { // Text for the button that toggles to register mode
+                en: "Register New User",
+                si: "නව පරිශීලකයෙකු ලියාපදිංචි කරන්න"
+            },
+            showLoginBtn: { // Text for the button that toggles back to login mode
+                en: "Back to Login",
+                si: "ලොග් වීමට ආපසු"
+            },
+            loginMessage: {
+                en: "Invalid username or password.",
+                si: "වැරදි පරිශීලක නාමය හෝ මුරපදය."
+            },
+            registrationSuccess: {
+                en: "Registration successful! You can now login.",
+                si: "ලියාපදිංචිය සාර්ථකයි! ඔබට දැන් පිවිසිය හැක."
+            },
+            registrationFailed: {
+                en: (error) => `Registration failed: ${error}.`,
+                si: (error) => `ලියාපදිංචිය අසාර්ථක විය: ${error}.`
+            },
+            loginSuccess: {
+                en: "Login successful!",
+                si: "පිවිසීම සාර්ථකයි!"
+            },
+            // Main App Screen
+            mainAppTitle: {
+                en: "Mouse & Keyboard Registry .REG File Generator",
+                si: "මවුස් හා කීබෝඩ් Registry .REG File Generator"
+            },
+            mainAppDescription: {
+                en: 'Enter your desired settings. After clicking "Generate & Download .REG File", a file will be downloaded. Once downloaded, you need to **run that file as Administrator** on Windows.',
+                si: 'ඔබට අවශ්‍ය සැකසුම් ඇතුළත් කරන්න. "Generate & Download .REG File" බොත්තම එබූ පසු, ෆයිල් එකක් download වනු ඇත. එය download කරගත් පසු, එම ෆයිල් එක Windows මත **Administrator ලෙස run කිරීමට අවශ්‍යයි**.'
+            },
+            generalMouseSettingsTitle: {
+                en: "General Mouse Settings",
+                si: "සාමාන්‍ය මවුස් සැකසුම්"
+            },
+            label_activeWindowTracking: {
+                en: "ActiveWindowTracking (dword: 0/1)",
+                si: "ActiveWindowTracking (dword: 0/1)"
+            },
+            label_beep: {
+                en: "Beep (string: Yes/No)",
+                si: "Beep (string: Yes/No)"
+            },
+            label_doubleClickHeight: {
+                en: "DoubleClickHeight (string)",
+                si: "DoubleClickHeight (string)"
+            },
+            label_doubleClickSpeed: {
+                en: "DoubleClickSpeed (string, e.g., 550)",
+                si: "DoubleClickSpeed (string, උදා: 550)"
+            },
+            label_doubleClickWidth: {
+                en: "DoubleClickWidth (string)",
+                si: "DoubleClickWidth (string)"
+            },
+            label_extendedSounds: {
+                en: "ExtendedSounds (string: Yes/No)",
+                si: "ExtendedSounds (string: Yes/No)"
+            },
+            label_mouseHoverHeight: {
+                en: "MouseHoverHeight (string)",
+                si: "MouseHoverHeight (string)"
+            },
+            label_mouseHoverTime: {
+                en: "MouseHoverTime (string, milliseconds)",
+                si: "MouseHoverTime (string, මිලි තත්පර)"
+            },
+            label_mouseHoverWidth: {
+                en: "MouseHoverWidth (string)",
+                si: "MouseHoverWidth (string)"
+            },
+            label_mouseSensitivity: {
+                en: "MouseSensitivity (string, e.g., 1-20)",
+                si: "MouseSensitivity (string, උදා: 1-20)"
+            },
+            label_mouseSpeed: {
+                en: "MouseSpeed (string, e.g., 0-2)",
+                si: "MouseSpeed (string, උදා: 0-2)"
+            },
+            label_mouseThreshold1: {
+                en: "MouseThreshold1 (string)",
+                si: "MouseThreshold1 (string)"
+            },
+            label_mouseThreshold2: {
+                en: "MouseThreshold2 (string)",
+                si: "MouseThreshold2 (string)"
+            },
+            label_mouseTrails: {
+                en: "MouseTrails (string: 0-7, 0=Off)",
+                si: "MouseTrails (string: 0-7, 0=අක්‍රිය)"
+            },
+            label_snapToDefaultButton: {
+                en: "SnapToDefaultButton (string: 0/1)",
+                si: "SnapToDefaultButton (string: 0/1)"
+            },
+            label_swapMouseButtons: {
+                en: "SwapMouseButtons (string: 0/1)",
+                si: "SwapMouseButtons (string: 0/1)"
+            },
+            warningText1: {
+                en: "**Note: The following keys are generally not applicable to the Mouse Registry Path (HKEY_CURRENT_USER\\Control Panel\\Mouse). Adding them to this location may not result in the intended functionality or may cause unforeseen issues.**",
+                si: "**සැ.යු.: පහත දැක්වෙන Keys සාමාන්‍යයෙන් Mouse Registry Path එකට (HKEY_CURRENT_USER\\Control Panel\\Mouse) අදාළ නොවේ. ඒවා මෙම ස්ථානයේ එකතු කිරීමෙන් අපේක්ෂිත ක්‍රියාකාරීත්වය සිදු නොවීමට හෝ අනවශ්‍ය ගැටළු ඇතිවීමට ඉඩ ඇත.**"
+            },
+            label_tcpWindowSize: {
+                en: "TcpWindowSize (dword: Hex value)",
+                si: "TcpWindowSize (dword: Hex අගය)"
+            },
+            label_tcpNoDelay: {
+                en: "TcpNoDelay (hex: comma separated hex values)",
+                si: "TcpNoDelay (hex: comma වලින් වෙන් කළ Hex අගයන්)"
+            },
+            tcpNoDelayExample: {
+                en: "Ex: 7f,14,00,00,00,00,00,00",
+                si: "උදා: 7f,14,00,00,00,00,00,00"
+            },
+            label_tcpDelAckTicks: {
+                en: "TCPDelAckTicks (dword: Hex value)",
+                si: "TCPDelAckTicks (dword: Hex අගය)"
+            },
+            label_tcp1323Opts: {
+                en: "Tcp1323Opts (dword: Hex value)",
+                si: "Tcp1323Opts (dword: Hex අගය)"
+            },
+            label_tcpMaxDataRetransmissions: {
+                en: "TcpMaxDataRetransmissions (dword: Hex value)",
+                si: "TcpMaxDataRetransmissions (dword: Hex අගය)"
+            },
+            label_sackOpts: {
+                en: "SackOpts (dword: Hex value)",
+                si: "SackOpts (dword: Hex අගය)"
+            },
+            label_defaultTTL: {
+                en: "DefaultTTL (dword: Hex value)",
+                si: "DefaultTTL (dword: Hex අගය)"
+            },
+            label_beep2: {
+                en: "Beep2 (string: Yes/No)",
+                si: "Beep2 (string: Yes/No)"
+            },
+            label_enablePMTUDiscovery: {
+                en: "EnablePMTUDiscovery (dword: Hex value)",
+                si: "EnablePMTUDiscovery (dword: Hex අගය)"
+            },
+            label_enablePMTUBHDetect: {
+                en: "EnablePMTUBHDetect (dword: Hex value)",
+                si: "EnablePMTUBHDetect (dword: Hex අගය)"
+            },
+            label_doubleClickHeight2: {
+                en: "DoubleClickHeight2 (string)",
+                si: "DoubleClickHeight2 (string)"
+            },
+            label_doubleClickSpeed2: {
+                en: "DoubleClickSpeed2 (string)",
+                si: "DoubleClickSpeed2 (string)"
+            },
+            label_doubleClickWidth2: {
+                en: "DoubleClickWidth2 (string)",
+                si: "DoubleClickWidth2 (string)"
+            },
+            label_extendedSounds2: {
+                en: "ExtendedSounds2 (string: Yes/No)",
+                si: "ExtendedSounds2 (string: Yes/No)"
+            },
+            label_mouseSensibility2: {
+                en: "MouseSensibility2 (string)",
+                si: "MouseSensibility2 (string)"
+            },
+            label_mouseSpeed2: {
+                en: "MouseSpeed2 (string)",
+                si: "MouseSpeed2 (string)"
+            },
+            label_mouseThreshold12: {
+                en: "MouseThreshold12 (string)",
+                si: "MouseThreshold12 (string)"
+            },
+            label_mouseThreshold22: {
+                en: "MouseThreshold22 (string)",
+                si: "MouseThreshold22 (string)"
+            },
+            label_activeFix: {
+                en: "ActiveFix (string)",
+                si: "ActiveFix (string)"
+            },
+            label_activeAC: {
+                en: "ActiveAC (string)",
+                si: "ActiveAC (string)"
+            },
+            label_activeDevoloped: {
+                en: "ActiveDevoloped (string)",
+                si: "ActiveDevoloped (string)"
+            },
+            label_active: {
+                en: "Active (string)",
+                si: "Active (string)"
+            },
+            label_enableSmoothCurvePresets: {
+                en: "Include SmoothMouseX/YCurve Presets (Pairs) in REG File",
+                si: "SmoothMouseX/YCurve Presets (යුගල වශයෙන්) REG ෆයිල් එකට ඇතුළත් කරන්න"
+            },
+            warningText2: {
+                en: "**Note: These values are complex Binary data and incorrect modification can affect mouse behavior. Proceed with caution when selecting. If this option is disabled, no values will be added to the REG file.**",
+                si: "**සැ.යු.: මෙම අගයන් සංකීර්ණ Binary දත්ත වන අතර, වැරදි ලෙස වෙනස් කළහොත් මවුස් හැසිරීමට බලපෑම් ඇති විය හැක. ඔබ තෝරාගන්නා විට ප්‍රවේශම් වන්න. මෙම විකල්පය අක්‍රිය කළහොත් REG ෆයිල් එකට අගයන් එකතු නොවේ.**"
+            },
+            label_smoothCurvePreset: {
+                en: "SmoothMouseX/YCurve Preset (Binary)",
+                si: "SmoothMouseX/YCurve Preset (Binary)"
+            },
+            curvePreset0: {
+                en: "Select a preset or leave blank",
+                si: "Preset එකක් තෝරන්න හෝ හිස්ව තබන්න"
+            },
+            curvePreset1: {
+                en: "1: Default Curve (X & Y)",
+                si: "1: Default Curve (X & Y)"
+            },
+            curvePreset2: {
+                en: "2: No Acceleration (X & Y)",
+                si: "2: No Acceleration (X & Y)"
+            },
+            curvePreset3: {
+                en: "3: Custom Curve Set 1",
+                si: "3: Custom Curve Set 1"
+            },
+            curvePreset4: {
+                en: "4: Custom Curve Set 2",
+                si: "4: Custom Curve Set 2"
+            },
+            curvePreset5: {
+                en: "5: Custom Curve Set 3",
+                si: "5: Custom Curve Set 3"
+            },
+            curvePreset6: {
+                en: "6: Custom Curve Set 4",
+                si: "6: Custom Curve Set 4"
+            },
+            additionalSmoothCurveTitle: {
+                en: "Additional Custom Smooth Curve (X & Y)",
+                si: "අමතර Custom Smooth Curve (X & Y)"
+            },
+            label_enableAdditionalSmoothCurve: {
+                en: "Include additional Custom Smooth Curve values in the REG file",
+                si: "අමතර Custom Smooth Curve අගයන් REG ෆයිල් එකට ඇතුළත් කරන්න"
+            },
+            warningText3: {
+                en: "**Note: Entering these values individually or incorrectly can severely impact mouse behavior. Use only if you know what you are doing.**",
+                si: "**මෙම අගයන් තනිව ඇතුළත් කිරීමෙන් හෝ වැරදි අගයන් ඇතුළත් කිරීමෙන් මවුස් හැසිරීමට දැඩි බලපෑම් ඇති විය හැක. ඔබ දන්නේ නම් පමණක් භාවිතා කරන්න.**"
+            },
+            label_additionalSmoothMouseXCurve: {
+                en: "Additional SmoothMouseXCurve (Binary)",
+                si: "අමතර SmoothMouseXCurve (Binary)"
+            },
+            additionalCurveXOption0: {
+                en: "Select a preset or leave blank",
+                si: "Preset එකක් තෝරන්න හෝ හිස්ව තබන්න"
+            },
+            additionalCurveXOption1: {
+                en: "1: Default Curve X",
+                si: "1: Default Curve X"
+            },
+            additionalCurveXOption2: {
+                en: "2: No Acceleration X",
+                si: "2: No Acceleration X"
+            },
+            additionalCurveXOption3: {
+                en: "3: Custom Curve X 1",
+                si: "3: Custom Curve X 1"
+            },
+            additionalCurveXOption4: {
+                en: "4: Custom Curve X 2",
+                si: "4: Custom Curve X 2"
+            },
+            additionalCurveXOption5: {
+                en: "5: Custom Curve X 3",
+                si: "5: Custom Curve X 3"
+            },
+            additionalCurveXOption6: {
+                en: "6: Custom Curve X 4",
+                si: "6: Custom Curve X 4"
+            },
+            label_additionalSmoothMouseYCurve: {
+                en: "Additional SmoothMouseYCurve (Binary)",
+                si: "අමතර SmoothMouseYCurve (Binary)"
+            },
+            additionalCurveYOption0: {
+                en: "Select a preset or leave blank",
+                si: "Preset එකක් තෝරන්න හෝ හිස්ව තබන්න"
+            },
+            additionalCurveYOption1: {
+                en: "1: Default Curve Y",
+                si: "1: Default Curve Y"
+            },
+            additionalCurveYOption2: {
+                en: "2: No Acceleration Y",
+                si: "2: No Acceleration Y"
+            },
+            additionalCurveYOption3: {
+                en: "3: Custom Curve Y 1",
+                si: "3: Custom Curve Y 1"
+            },
+            additionalCurveYOption4: {
+                en: "4: Custom Curve Y 2",
+                si: "4: Custom Curve Y 2"
+            },
+            additionalCurveYOption5: {
+                en: "5: Custom Curve Y 3",
+                si: "5: Custom Curve Y 3"
+            },
+            additionalCurveYOption6: {
+                en: "6: Custom Curve Y 4",
+                si: "6: Custom Curve Y 4"
+            },
+            label_customFilename: {
+                en: "Main Settings File Name (.reg extension with or without):",
+                si: "ප්‍රධාන සැකසුම් ෆයිල් නාමය (.reg දිගුව සමඟ හෝ නැතිව):"
+            },
+            customFilenamePlaceholder: {
+                en: "e.g., my_mouse_settings",
+                si: "උදා: my_mouse_settings"
+            },
+            generateButtonText: {
+                en: "Generate & Download .REG File with All General Settings",
+                si: "සියලු සාමාන්‍ය සැකසුම් සහිත .REG ෆයිල් එක සාදන්න සහ Download කරන්න"
+            },
+            mouseDelayFixTitle: {
+                en: "Mouse Delay Fix (No Acceleration)",
+                si: "Mouse Delay Fix (No Acceleration)"
+            },
+            mouseDelayFixDescription: {
+                en: "This button will generate a Registry setting that disables Windows Mouse Acceleration. ",
+                si: "මෙම බොත්තම මඟින් Windows Mouse Acceleration අක්‍රිය කරනු ලබන Registry සැකසුමක් Generate කරනු ඇත. "
+            },
+            mouseDelayFixWarning: {
+                en: "**Note: This setting is generally not applicable to the Mouse Registry Path itself. Adding it to this location may not result in the intended functionality or may cause unforeseen issues.**",
+                si: "**සැ.යු.: මෙම සැකසුම සාමාන්‍යයෙන් මවුස් Registry Path එකටම අදාළ නොවේ. එය මෙම ස්ථානයේ එකතු කිරීමෙන් අපේක්ෂිත ක්‍රියාකාරීත්වය සිදු නොවීමට හෝ අනවශ්‍ය ගැටළු ඇතිවීමට ඉඩ ඇත.**"
+            },
+            label_customDelayFixFilename: {
+                en: "Mouse Delay Fix File Name (.reg extension with or without):",
+                si: "Mouse Delay Fix ෆයිල් නාමය (.reg දිගුව සමඟ හෝ නැතිව):"
+            },
+            customDelayFixFilenamePlaceholder: {
+                en: "e.g., mouse_no_accel",
+                si: "උදා: mouse_no_accel"
+            },
+            generateDelayFixButtonText: {
+                en: "Generate & Download Mouse Delay Fix .REG File",
+                si: "මවුස් ප්‍රමාදය නිවැරදි කිරීමේ .REG ෆයිල් එක සාදන්න සහ Download කරන්න"
+            },
+            keyboardDelayFixTitle: {
+                en: "Keyboard Delay Fix (Fast Response)",
+                si: "Keyboard Delay Fix (Fast Response)"
+            },
+            keyboardDelayFixDescription: {
+                en: "This button will generate a Registry setting that sets Keyboard Repeat Delay and Repeat Rate to maximum speed.",
+                si: "මෙම බොත්තම මඟින් Keyboard Repeat Delay සහ Repeat Rate උපරිම වේගයට සකසන Registry සැකසුමක් Generate කරනු ඇත."
+            },
+            keyboardDelayFixWarning: {
+                en: "**Note: These settings are generally not applicable to the Keyboard Registry Path itself. Adding them to this location may not result in the intended functionality or may not work as expected.**",
+                si: "**සැ.යු.: මෙම සැකසුම් සාමාන්‍යයෙන් Keyboard Registry Path එකටම අදාළ නොවේ. ඒවා මෙම ස්ථානයේ එකතු කිරීමෙන් අපේක්ෂිත ක්‍රියාකාරීත්වය සිදු නොවීමට හෝ අනවශ්‍ය ගැටළු ඇතිවීමට ඉඩ ඇත.**"
+            },
+            label_customKeyboardDelayFixFilename: {
+                en: "Keyboard Delay Fix File Name (.reg extension with or without):",
+                si: "Keyboard Delay Fix ෆයිල් නාමය (.reg දිගුව සමඟ හෝ නැතිව):"
+            },
+            customKeyboardDelayFixFilenamePlaceholder: {
+                en: "e.g., keyboard_fast_response",
+                si: "උදා: keyboard_fast_response"
+            },
+            generateKeyboardDelayFixButtonText: {
+                en: "Generate & Download Keyboard Delay Fix .REG File",
+                si: "කීබෝඩ් ප්‍රමාදය නිවැරදි කිරීමේ .REG ෆයිල් එක සාදන්න සහ Download කරන්න"
+            },
+            instructionsTitle: {
+                en: "Troubleshooting Issues After Download:",
+                si: "Download කිරීමෙන් පසු ඇතිවන ගැටළු නිරාකරණය කරගැනීමට:"
+            },
+            instructionsParagraph1: {
+                en: "When you download a `.reg` file, Windows may block it for security reasons. To run it successfully, follow these steps:",
+                si: "ඔබ `.reg` ෆයිල් එකක් download කරන විට, Windows මගින් එය ආරක්ෂක හේතු මත අවහිර කළ හැක. එය සාර්ථකව run කරගැනීමට පහත පියවර අනුගමනය කරන්න:"
+            },
+            instructionStep1: {
+                en: 'Go to the folder where you downloaded the `.reg` file. (Usually the "Downloads" folder)',
+                si: 'Download කරගත් `.reg` ෆයිල් එක තිබෙන ෆෝල්ඩරයට යන්න. (සාමාන්‍යයෙන් "Downloads" ෆෝල්ඩරය)'
+            },
+            instructionStep2: {
+                en: '**Right-click** on the file.',
+                si: 'ෆයිල් එක මත **Right-click** කරන්න.'
+            },
+            instructionStep3: {
+                en: 'Select `Properties`.',
+                si: '`Properties` තෝරන්න.'
+            },
+            instructionStep4: {
+                en: 'Under the `General` tab, in the `Security` section, there will be a checkbox that says "This file came from another computer and might be blocked...". **Tick** "Unblock" and click `Apply` and `OK`.',
+                si: '`General` tab එක යටතේ, `Security` කොටසේ "This file came from another computer and might be blocked..." යනුවෙන් සඳහන් වූ තැනක **"Unblock"** යනුවෙන් සලකුණු කොටුවක් (checkbox) ඇත. එය **ටික්** කර `Apply` සහ `OK` කරන්න.'
+            },
+            instructionStep5: {
+                en: 'Once the file is `Unblock`ed, **Right-click** on it again and select the **"Merge"** option.',
+                si: 'ෆයිල් එක `Unblock` කළ පසු, නැවත එම ෆයිල් එක මත **Right-click** කර **"Merge"** (ඒකාබද්ධ කරන්න) විකල්පය තෝරන්න.'
+            },
+            instructionStep6: {
+                en: 'When prompted for permission to make changes to the Registry, select **Yes** or **Run as administrator**.',
+                si: 'Registry එකට වෙනස්කම් සිදු කිරීමට අවසර ඉල්ලන විට **Yes** හෝ **Run as administrator** දෙන්න.'
+            },
+            instructionsParagraph2: {
+                en: "Following these steps will enable you to successfully update your Registry Settings.",
+                si: "මෙම පියවර මගින් ඔබට Registry Settings සාර්ථකව යාවත්කාලීන කර ගැනීමට හැකි වනු ඇත."
+            },
+            // Status Messages for downloads (will be dynamically updated)
+            downloadSuccess: {
+                en: (filename) => `Your "${filename}" file has been successfully generated and downloaded. Please follow the instructions below to run it.`,
+                si: (filename) => `ඔබගේ "${filename}" ෆයිල් එක සාර්ථකව සාදා Download කරන ලදී. එය ක්‍රියාත්මක කිරීමට පහත උපදෙස් අනුගමනය කරන්න.`
+            },
+            downloadError: {
+                en: (error) => `Error: ${error}. Please try again.`,
+                si: (error) => `දෝෂය: ${error}. කරුණාකර නැවත උත්සාහ කරන්න.`
+            }
+        };
+
+        function setLanguage(lang) {
+            // Update Text Content for static elements and labels
+            document.getElementById('loginTitle').textContent = isRegisterMode ? translations.registerTitle[lang] : translations.loginTitle[lang];
+            // Update placeholders using the new custom keys
+            document.getElementById('username').placeholder = translations.usernamePlaceholder[lang];
+            document.getElementById('password').placeholder = translations.passwordPlaceholder[lang];
+            document.getElementById('adminKey').placeholder = translations.adminKeyPlaceholder[lang]; // New placeholder
+            
+            document.getElementById('loginBtn').textContent = isRegisterMode ? translations.registerBtn[lang] : translations.loginBtn[lang];
+            showRegisterBtn.textContent = isRegisterMode ? translations.showLoginBtn[lang] : translations.showRegisterBtn[lang];
+
+            document.getElementById('mainAppTitle').textContent = translations.mainAppTitle[lang];
+            document.getElementById('mainAppDescription').textContent = translations.mainAppDescription[lang];
+            document.getElementById('generalMouseSettingsTitle').textContent = translations.generalMouseSettingsTitle[lang];
+
+            // Update all labels
+            const labelIds = [
+                'usernameLabel', 'passwordLabel', 'adminKeyLabel', // Added adminKeyLabel
+                'label_activeWindowTracking', 'label_beep', 'label_doubleClickHeight', 'label_doubleClickSpeed',
+                'label_doubleClickWidth', 'label_extendedSounds', 'label_mouseHoverHeight', 'label_mouseHoverTime',
+                'label_mouseHoverWidth', 'label_mouseSensitivity', 'label_mouseSpeed', 'label_mouseThreshold1',
+                'label_mouseThreshold2', 'label_mouseTrails', 'label_snapToDefaultButton', 'label_swapMouseButtons',
+                'label_tcpWindowSize', 'label_tcpNoDelay', 'label_tcpDelAckTicks', 'label_tcp1323Opts',
+                'label_tcpMaxDataRetransmissions', 'label_sackOpts', 'label_defaultTTL', 'label_beep2',
+                'label_enablePMTUDiscovery', 'label_enablePMTUBHDetect', 'label_doubleClickHeight2', 'label_doubleClickSpeed2',
+                'label_doubleClickWidth2', 'label_extendedSounds2', 'label_mouseSensibility2', 'label_mouseSpeed2',
+                'label_mouseThreshold12', 'label_mouseThreshold22', 'label_activeFix', 'label_activeAC',
+                'label_activeDevoloped', 'label_active', 'label_enableSmoothCurvePresets', 'label_smoothCurvePreset',
+                'label_additionalSmoothMouseXCurve', 'label_additionalSmoothMouseYCurve',
+                'label_customFilename', 'label_customDelayFixFilename', 'label_customKeyboardDelayFixFilename'
+            ];
+            labelIds.forEach(id => {
+                const element = document.getElementById(id);
+                if (element && translations[id]) {
+                    element.textContent = translations[id][lang];
+                }
+            });
+
+            // Update specific text elements with HTML content (warnings, descriptions)
+            document.getElementById('warningText1').innerHTML = translations.warningText1[lang];
+            document.getElementById('warningText2').innerHTML = translations.warningText2[lang];
+            document.getElementById('warningText3').innerHTML = translations.warningText3[lang];
+            document.getElementById('mouseDelayFixWarning').innerHTML = translations.mouseDelayFixWarning[lang];
+            document.getElementById('keyboardDelayFixWarning').innerHTML = translations.keyboardDelayFixWarning[lang];
+            document.getElementById('tcpNoDelayExample').textContent = translations.tcpNoDelayExample[lang];
+
+
+            // Update dropdown options
+            document.getElementById('curvePreset0').textContent = translations.curvePreset0[lang];
+            document.getElementById('curvePreset1').textContent = translations.curvePreset1[lang];
+            document.getElementById('curvePreset2').textContent = translations.curvePreset2[lang];
+            document.getElementById('curvePreset3').textContent = translations.curvePreset3[lang];
+            document.getElementById('curvePreset4').textContent = translations.curvePreset4[lang];
+            document.getElementById('curvePreset5').textContent = translations.curvePreset5[lang];
+            document.getElementById('curvePreset6').textContent = translations.curvePreset6[lang];
+            
+            document.getElementById('additionalCurveXOption0').textContent = translations.additionalCurveXOption0[lang];
+            document.getElementById('additionalCurveXOption1').textContent = translations.additionalCurveXOption1[lang];
+            document.getElementById('additionalCurveXOption2').textContent = translations.additionalCurveXOption2[lang];
+            document.getElementById('additionalCurveXOption3').textContent = translations.additionalCurveXOption3[lang];
+            document.getElementById('additionalCurveXOption4').textContent = translations.additionalCurveXOption4[lang];
+            document.getElementById('additionalCurveXOption5').textContent = translations.additionalCurveXOption5[lang];
+            document.getElementById('additionalCurveXOption6').textContent = translations.additionalCurveXOption6[lang];
+            document.getElementById('additionalCurveYOption0').textContent = translations.additionalCurveYOption0[lang];
+            document.getElementById('additionalCurveYOption1').textContent = translations.additionalCurveYOption1[lang];
+            document.getElementById('additionalCurveYOption2').textContent = translations.additionalCurveYOption2[lang];
+            document.getElementById('additionalCurveYOption3').textContent = translations.additionalCurveYOption3[lang];
+            document.getElementById('additionalCurveYOption4').textContent = translations.additionalCurveYOption4[lang];
+            document.getElementById('additionalCurveYOption5').textContent = translations.additionalCurveYOption5[lang];
+            document.getElementById('additionalCurveYOption6').textContent = translations.additionalCurveYOption6[lang];
+
+
+            // Update button texts
+            document.getElementById('generateBtn').textContent = translations.generateButtonText[lang];
+            document.getElementById('generateDelayFixBtn').textContent = translations.generateDelayFixButtonText[lang];
+            document.getElementById('generateKeyboardDelayFixBtn').textContent = translations.generateKeyboardDelayFixButtonText[lang];
+
+            document.getElementById('mouseDelayFixTitle').textContent = translations.mouseDelayFixTitle[lang];
+            document.getElementById('mouseDelayFixDescription').textContent = translations.mouseDelayFixDescription[lang];
+            document.getElementById('customDelayFixFilename').placeholder = translations.customDelayFixFilenamePlaceholder[lang];
+
+            document.getElementById('keyboardDelayFixTitle').textContent = translations.keyboardDelayFixTitle[lang];
+            document.getElementById('keyboardDelayFixDescription').textContent = translations.keyboardDelayFixDescription[lang];
+            document.getElementById('customKeyboardDelayFixFilename').placeholder = translations.customKeyboardDelayFixFilenamePlaceholder[lang];
+
+            // Instructions section
+            document.getElementById('instructionsTitle').textContent = translations.instructionsTitle[lang];
+            document.getElementById('instructionsParagraph1').textContent = translations.instructionsParagraph1[lang];
+            document.getElementById('instructionStep1').textContent = translations.instructionStep1[lang];
+            document.getElementById('instructionStep2').textContent = translations.instructionStep2[lang];
+            document.getElementById('instructionStep3').textContent = translations.instructionStep3[lang];
+            document.getElementById('instructionStep4').innerHTML = translations.instructionStep4[lang];
+            document.getElementById('instructionStep5').innerHTML = translations.instructionStep5[lang];
+            document.getElementById('instructionStep6').innerHTML = translations.instructionStep6[lang];
+            document.getElementById('instructionsParagraph2').textContent = translations.instructionsParagraph2[lang];
+            
+            // Update custom filename placeholder
+            document.getElementById('customFilename').placeholder = translations.customFilenamePlaceholder[lang];
+
+            // Manage active class for language buttons (main app screen)
+            if (lang === 'en') {
+                langEnBtn.classList.add('active');
+                langSiBtn.classList.remove('active');
+            } else {
+                langSiBtn.classList.add('active');
+                langEnBtn.classList.remove('active');
+            }
+            // Manage active class for language buttons (login screen)
+            if (lang === 'en') {
+                langEnLoginBtn.classList.add('active');
+                langSiLoginBtn.classList.remove('active');
+            } else {
+                langSiLoginBtn.classList.add('active');
+                langEnLoginBtn.classList.remove('active');
+            }
+        }
+
+        async function handleLogin() {
+            const email = usernameInput.value;
+            const password = passwordInput.value;
+
+            loginMessage.classList.remove('status-error', 'status-success', 'show');
+            loginMessage.textContent = '';
+
+            if (!email || !password) {
+                loginMessage.textContent = "Please enter both email and password.";
+                loginMessage.classList.add('status-error', 'show');
+                return;
+            }
+
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                const currentLang = langEnLoginBtn.classList.contains('active') ? 'en' : 'si';
+                loginMessage.textContent = translations.loginMessage[currentLang];
+                loginMessage.classList.add('status-error', 'show');
+                console.error("Login Error:", error.message);
+            } else {
+                const currentLang = langEnLoginBtn.classList.contains('active') ? 'en' : 'si';
+                loginMessage.textContent = translations.loginSuccess[currentLang];
+                loginMessage.classList.add('status-success', 'show');
+
+                loginScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    loginScreen.classList.add('hidden');
+                    mainAppScreen.classList.remove('hidden');
+                    mainAppScreen.classList.add('fade-in');
+                }, 800);
+            }
+        }
+
+        async function handleRegister() {
+            const email = usernameInput.value;
+            const password = passwordInput.value;
+            const adminKey = adminKeyInput.value;
+
+            loginMessage.classList.remove('status-error', 'status-success', 'show');
+            loginMessage.textContent = '';
+
+            if (!email || !password || !adminKey) {
+                loginMessage.textContent = "Please enter email, password, and admin key.";
+                loginMessage.classList.add('status-error', 'show');
+                return;
+            }
+
+            if (adminKey !== ADMIN_KEY) {
+                loginMessage.textContent = "Invalid Admin Key.";
+                loginMessage.classList.add('status-error', 'show');
+                return;
+            }
+
+            const { data, error } = await supabase.auth.signUp({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                const currentLang = langEnLoginBtn.classList.contains('active') ? 'en' : 'si';
+                loginMessage.textContent = translations.registrationFailed[currentLang](error.message);
+                loginMessage.classList.add('status-error', 'show');
+                console.error("Registration Error:", error.message);
+            } else {
+                const currentLang = langEnLoginBtn.classList.contains('active') ? 'en' : 'si';
+                loginMessage.textContent = translations.registrationSuccess[currentLang];
+                loginMessage.classList.add('status-success', 'show');
+                // Optionally switch back to login mode after successful registration
+                isRegisterMode = false;
+                toggleLoginRegisterMode();
+            }
+        }
+
+        function toggleLoginRegisterMode() {
+            const currentLang = langEnLoginBtn.classList.contains('active') ? 'en' : 'si';
+
+            if (isRegisterMode) {
+                adminKeyField.classList.remove('hidden');
+                loginBtn.removeEventListener('click', handleLogin);
+                loginBtn.addEventListener('click', handleRegister);
+                loginBtn.textContent = translations.registerBtn[currentLang];
+                showRegisterBtn.textContent = translations.showLoginBtn[currentLang];
+                document.getElementById('loginTitle').textContent = translations.registerTitle[currentLang];
+            } else {
+                adminKeyField.classList.add('hidden');
+                loginBtn.removeEventListener('click', handleRegister);
+                loginBtn.addEventListener('click', handleLogin);
+                loginBtn.textContent = translations.loginBtn[currentLang];
+                showRegisterBtn.textContent = translations.showRegisterBtn[currentLang];
+                document.getElementById('loginTitle').textContent = translations.loginTitle[currentLang];
+            }
+            loginMessage.classList.remove('status-error', 'status-success', 'show'); // Clear messages on toggle
+            loginMessage.textContent = '';
+            usernameInput.value = ''; // Clear fields
+            passwordInput.value = '';
+            adminKeyInput.value = '';
+        }
+
+
+        loginBtn.addEventListener('click', handleLogin); // Default to login mode
+
+        showRegisterBtn.addEventListener('click', () => {
+            isRegisterMode = !isRegisterMode;
+            toggleLoginRegisterMode();
+        });
+
+
+        // Set initial language on load (and ensure correct button is styled if needed)
+        window.addEventListener('load', async () => {
+            // Check for existing session
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (session) {
+                // User is already logged in, show main app
+                loginScreen.classList.add('hidden');
+                mainAppScreen.classList.remove('hidden');
+                mainAppScreen.classList.add('fade-in');
+            } else {
+                // No session, show login screen
+                mainAppScreen.classList.add('hidden');
+                loginScreen.classList.remove('hidden');
+                loginScreen.classList.add('fade-in');
+            }
+            setLanguage('en'); // Default to English
+        });
+
+        // Event listeners for language buttons
+        langEnBtn.addEventListener('click', () => {
+            setLanguage('en');
+        });
+        langSiBtn.addEventListener('click', () => {
+            setLanguage('si');
+        });
+        // Language buttons for login screen
+        langEnLoginBtn.addEventListener('click', () => {
+            setLanguage('en');
+        });
+        langSiLoginBtn.addEventListener('click', () => {
+            setLanguage('si');
+        });
+
+
+        const generateBtn = document.getElementById('generateBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const customFilenameInput = document.getElementById('customFilename');
+
+        const enableSmoothCurvePresetsCheckbox = document.getElementById('enableSmoothCurvePresets');
+        const smoothCurvePresetSelect = document.getElementById('smoothCurvePreset');
+
+        const enableAdditionalSmoothCurveCheckbox = document.getElementById('enableAdditionalSmoothCurve');
+        const additionalSmoothMouseXCurveSelect = document.getElementById('additionalSmoothMouseXCurve');
+        const additionalSmoothMouseYCurveSelect = document.getElementById('additionalSmoothMouseYCurve');
+
+        const generateDelayFixBtn = document.getElementById('generateDelayFixBtn');
+        const delayFixStatusMessage = document.getElementById('delayFixStatusMessage');
+        const customDelayFixFilenameInput = document.getElementById('customDelayFixFilename');
+
+        const generateKeyboardDelayFixBtn = document.getElementById('generateKeyboardDelayFixBtn');
+        const keyboardDelayFixStatusMessage = document.getElementById('keyboardDelayFixStatusMessage');
+        const customKeyboardDelayFixFilenameInput = document.getElementById('customKeyboardDelayFixFilename');
+
+        const getInputValue = (id) => document.getElementById(id).value;
+
+        function downloadRegFile(content, filename, statusElement) {
+            try {
+                const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                const currentLang = langEnBtn.classList.contains('active') ? 'en' : 'si';
+                statusElement.textContent = translations.downloadSuccess[currentLang](filename);
+                statusElement.classList.remove('status-error');
+                statusElement.classList.add('status-success', 'show');
+            } catch (error) {
+                const currentLang = langEnBtn.classList.contains('active') ? 'en' : 'si';
+                statusElement.textContent = translations.downloadError[currentLang](error.message);
+                statusElement.classList.remove('status-success');
+                statusElement.classList.add('status-error', 'show');
+            }
+        }
+
+        // Function to toggle the disabled state of the Smooth Curve Presets dropdown
+        function toggleSmoothCurvePresetsDropdown() {
+            const isEnabled = enableSmoothCurvePresetsCheckbox.checked;
+            smoothCurvePresetSelect.disabled = !isEnabled;
+            // Also update the cursor style for the disabled select
+            if (!isEnabled) {
+                smoothCurvePresetSelect.classList.add('cursor-not-allowed');
+            } else {
+                smoothCurvePresetSelect.classList.remove('cursor-not-allowed');
+            }
+        }
+
+        // Function to toggle the disabled state of the Additional Smooth Curve inputs
+        function toggleAdditionalSmoothCurveInputs() {
+            const isEnabled = enableAdditionalSmoothCurveCheckbox.checked;
+            additionalSmoothMouseXCurveSelect.disabled = !isEnabled;
+            additionalSmoothMouseYCurveSelect.disabled = !isEnabled;
+
+            // Also update the cursor style for the disabled selects
+            if (!isEnabled) {
+                additionalSmoothMouseXCurveSelect.classList.add('cursor-not-allowed');
+                additionalSmoothMouseYCurveSelect.classList.add('cursor-not-allowed');
+            } else {
+                additionalSmoothMouseXCurveSelect.classList.remove('cursor-not-allowed');
+                additionalSmoothMouseYCurveSelect.classList.remove('cursor-not-allowed');
+            }
+        }
+
+        // Mutual exclusion logic for curve checkboxes
+        enableSmoothCurvePresetsCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                enableAdditionalSmoothCurveCheckbox.checked = false; // Uncheck the other one
+            }
+            toggleSmoothCurvePresetsDropdown();
+            toggleAdditionalSmoothCurveInputs();
+        });
+
+        enableAdditionalSmoothCurveCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                enableSmoothCurvePresetsCheckbox.checked = false; // Uncheck the other one
+            }
+            toggleSmoothCurvePresetsDropdown();
+            toggleAdditionalSmoothCurveInputs();
+        });
+
+        // Initial calls to set state on page load
+        toggleSmoothCurvePresetsDropdown();
+        toggleAdditionalSmoothCurveInputs();
+
+
+        // --- Main General Settings Generation ---
+        generateBtn.addEventListener('click', function() {
+            statusMessage.textContent = ''; // Clear previous messages
+            statusMessage.classList.remove('status-success', 'status-error', 'show'); // Reset class and hide
+
+            const regContent = [
+                'Windows Registry Editor Version 5.00',
+                '',
+                '[HKEY_CURRENT_USER\\Control Panel\\Mouse]'
+            ];
+
+            try {
+                // Existing Mouse Keys
+                const activeWindowTracking = parseInt(getInputValue('activeWindowTracking'));
+                if (isNaN(activeWindowTracking) || (activeWindowTracking !== 0 && activeWindowTracking !== 1)) {
+                    throw new Error('ActiveWindowTracking must be 0 or 1.');
+                }
+                regContent.push(`"ActiveWindowTracking"=dword:${activeWindowTracking.toString(16).padStart(8, '0')}`);
+                regContent.push(`"Beep"="${getInputValue('beep')}"`);
+                regContent.push(`"DoubleClickHeight"="${getInputValue('doubleClickHeight')}"`);
+                regContent.push(`"DoubleClickSpeed"="${getInputValue('doubleClickSpeed')}"`);
+                regContent.push(`"DoubleClickWidth"="${getInputValue('doubleClickWidth')}"`);
+                regContent.push(`"ExtendedSounds"="${getInputValue('extendedSounds')}"`);
+                regContent.push(`"MouseHoverHeight"="${getInputValue('mouseHoverHeight')}"`);
+                regContent.push(`"MouseHoverTime"="${getInputValue('mouseHoverTime')}"`);
+                regContent.push(`"MouseHoverWidth"="${getInputValue('mouseHoverWidth')}"`);
+                regContent.push(`"MouseSensitivity"="${getInputValue('mouseSensitivity')}"`);
+                regContent.push(`"MouseSpeed"="${getInputValue('mouseSpeed')}"`);
+                regContent.push(`"MouseThreshold1"="${getInputValue('mouseThreshold1')}"`);
+                regContent.push(`"MouseThreshold2"="${getInputValue('mouseThreshold2')}"`);
+                regContent.push(`"MouseTrails"="${getInputValue('mouseTrails')}"`);
+                regContent.push(`"SnapToDefaultButton"="${getInputValue('snapToDefaultButton')}"`);
+                regContent.push(`"SwapMouseButtons"="${getInputValue('swapMouseButtons')}"`);
+
+                // Add selected SmoothMouseXCurve and SmoothMouseYCurve from presets if checkbox is checked
+                if (enableSmoothCurvePresetsCheckbox.checked) {
+                    const selectedPreset = JSON.parse(smoothCurvePresetSelect.value);
+                    if (selectedPreset.x && selectedPreset.y) {
+                        regContent.push(`"SmoothMouseXCurve"=hex:${selectedPreset.x}`);
+                        regContent.push(`"SmoothMouseYCurve"=hex:${selectedPreset.y}`);
+                    } else {
+                        throw new Error("SmoothMouseX/YCurve Preset does not contain valid values.");
+                    }
+                }
+
+                // Add values from additional custom curve inputs if checkbox is checked
+                if (enableAdditionalSmoothCurveCheckbox.checked) {
+                    const additionalXCurve = additionalSmoothMouseXCurveSelect.value.trim();
+                    const additionalYCurve = additionalSmoothMouseYCurveSelect.value.trim();
+
+                    if (additionalXCurve.length === 0 || additionalYCurve.length === 0) {
+                        throw new Error("Please select a preset for Additional SmoothMouseX/YCurve.");
+                    }
+
+                    regContent.push(`"SmoothMouseXCurve"=hex:${additionalXCurve}`);
+                    regContent.push(`"SmoothMouseYCurve"=hex:${additionalYCurve}`);
+                }
+
+
+                // New Keys Added by User Request (TCP/IP and custom G@ku keys)
+                const dwordKeys = [
+                    "tcpWindowSize", "tcpDelAckTicks", "tcp1323Opts",
+                    "tcpMaxDataRetransmissions", "sackOpts", "defaultTTL",
+                    "enablePMTUDiscovery", "enablePMTUBHDetect"
+                ];
+                dwordKeys.forEach(key => {
+                    const value = getInputValue(key);
+                    if (!/^[0-9a-fA-F]{8}$/.test(value)) {
+                        throw new Error(`Please enter a valid Hexadecimal (8-digit) value for '${key}'.`);
+                    }
+                    regContent.push(`"${key}"=dword:${value}`);
+                });
+
+                const tcpNoDelayValue = getInputValue('tcpNoDelay').trim();
+                if (!/^[0-9a-fA-F,]+$/.test(tcpNoDelayValue.replace(/,/g, '')) || tcpNoDelayValue.split(',').some(byte => byte.length !== 2)) {
+                    throw new Error("Please enter valid comma-separated Hexadecimal bytes for 'TcpNoDelay' (e.g., 7f,14,00,00,00,00,00,00).");
+                }
+                regContent.push(`"TcpNoDelay"=hex:${tcpNoDelayValue}`);
+
+                const stringKeys = [
+                    "beep2", "doubleClickHeight2", "doubleClickSpeed2",
+                    "doubleClickWidth2", "extendedSounds2", "mouseSensibility2",
+                    "mouseSpeed2", "mouseThreshold12", "mouseThreshold22",
+                    "activeFix", "activeAC", "activeDevoloped", "active"
+                ];
+                stringKeys.forEach(key => {
+                    regContent.push(`"${key}"="${getInputValue(key)}"`);
+                });
+
+                const regFileContent = regContent.join('\r\n');
+
+                let customFilename = customFilenameInput.value.trim();
+                if (customFilename === '') {
+                    customFilename = 'mouse_settings';
+                }
+                if (!customFilename.toLowerCase().endsWith('.reg')) {
+                    customFilename += '.reg';
+                }
+
+                downloadRegFile(regFileContent, customFilename, statusMessage);
+
+            } catch (error) {
+                statusMessage.textContent = `Error: ${error.message}. Please enter valid values.`;
+                statusMessage.classList.add('status-error', 'show');
+            }
+        });
+
+        // --- Mouse Delay Fix Settings Generation (FIXED VALUES) ---
+        generateDelayFixBtn.addEventListener('click', function() {
+            delayFixStatusMessage.textContent = '';
+            delayFixStatusMessage.classList.remove('status-success', 'status-error', 'show');
+
+            const regContentDelayFix = [
+                'Windows Registry Editor Version 5.00',
+                '',
+                '[HKEY_CURRENT_USER\\Control Panel\\Mouse]',
+                '"MouseSpeed"="0"',
+                '"MouseThreshold1"="0"',
+                '"MouseThreshold2"="0"',
+                '"MouseSensitivity"="10"',
+                '"SmoothMouseXCurve"=hex:00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00',
+                '"SmoothMouseYCurve"=hex:00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00',
+                '"ActiveWindowTracking"=dword:00000000',
+                '"Beep"="No"',
+                '"DoubleClickHeight"="4"',
+                '"DoubleClickSpeed"="500"',
+                '"DoubleClickWidth"="4"',
+                '"ExtendedSounds"="No"',
+                '"MouseHoverHeight"="4"',
+                '"MouseHoverWidth"="4"',
+                '"MouseTrails"="0"',
+                '"SnapToDefaultButton"="0"',
+                '"SwapMouseButtons"="0"',
+                '"MouseHoverTime"="8"',
+                '',
+
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\mouhid\\Parameters]',
+                '"TreatAbsolutePointerAsAbsolute"=dword:00000001',
+                '"TreatAbsoluteAsRelative"=dword:00000000',
+                '',
+
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\mouclass\\Parameters]',
+                '"ThreadPriority"=dword:0000001f', // 31 in hex
+                '"MouseDataQueueSize"=dword:00000005', // 5 in hex
+                '',
+                
+                '[HKEY_USERS\\.DEFAULT\\Control Panel\\Desktop]',
+                '"ForegroundLockTimeout"=dword:00000000',
+                '"MenuShowDelay"="0"',
+                '"MouseWheelRouting"=dword:00000000',
+                '',
+
+                '[HKEY_USERS\\.DEFAULT\\Control Panel\\Mouse]',
+                '"Beep"="No"',
+                '"ExtendedSounds"="No"',
+                '',
+                
+                '[HKEY_USERS\\.DEFAULT\\Control Panel\\Sound]',
+                '"Beep"="no"',
+                '"ExtendedSounds"="no"',
+                '',
+
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel]',
+                '"DebugPollInterval"=dword:000003e8', // 1000 in hex
+                '',
+
+                '[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions]',
+                '"CpuPriorityClass"=dword:00000004',
+                '"IoPriority"=dword:00000003',
+                '',
+
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\usbxhci\\Parameters]',
+                '"ThreadPriority"=dword:0000001f', // 31 in hex
+                '',
+
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\USBHUB3\\Parameters]',
+                '"ThreadPriority"=dword:0000001f', // 31 in hex
+                '',
+
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\nvlddmkm\\Parameters]',
+                '"ThreadPriority"=dword:0000001f', // 31 in hex
+                '',
+
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\NDIS\\Parameters]',
+                '"ThreadPriority"=dword:0000001f', // 31 in hex
+                '',
+
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\DXGKrnl\\Parameters]',
+                '"ThreadPriority"=dword:0000000f', // 15 in hex
+                '',
+                
+                // Device Parameters for USB devices (Note: %%a, %%s, %%i are placeholder for batch/cmd scripts, 
+                // these keys might need specific device instance paths in a real .reg file. 
+                // For a generic .reg file, these will be literal and might not apply to all devices.
+                // It's generally safer to apply these using a script that iterates through devices if dynamic paths are needed.)
+                // I'm including them as literals as per your request, but be aware of their dynamic nature.
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Enum\\%%a\\Device Parameters]',
+                '"SelectiveSuspendOn"=dword:00000000',
+                '"SelectiveSuspendEnabled"=hex:00',
+                '"EnhancedPowerManagementEnabled"=dword:00000000',
+                '"AllowIdleIrpInD3"=dword:00000000',
+                '"DeviceSelectiveSuspended"=dword:00000000',
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Enum\\%%a\\Device Parameters\\WDF]',
+                '"IdleInWorkingState"=dword:00000000',
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Enum\\%%s\\Device Parameters]',
+                '"SelectiveSuspendOn"=dword:00000000',
+                '"SelectiveSuspendEnabled"=hex:00',
+                '"EnhancedPowerManagementEnabled"=dword:00000000',
+                '"AllowIdleIrpInD3"=dword:00000000',
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Enum\\%%s\\Device Parameters\\WDF]',
+                '"IdleInWorkingState"=dword:00000000',
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Enum\\%%i\\Device Parameters]',
+                '"EnhancedPowerManagementEnabled"=dword:00000000',
+                '"AllowIdleIrpInD3"=dword:00000000',
+                '"EnableSelectiveSuspend"=dword:00000000',
+                '"DeviceSelectiveSuspended"=dword:00000000',
+                '"SelectiveSuspendEnabled"=dword:00000000',
+                '"SelectiveSuspendOn"=dword:00000000',
+                '"D3ColdSupported"=dword:00000000',
+                '',
+                // Additional entries repeating some of the above for '%%a' and 'ControlSet001'
+                // Note: ControlSet001 is often a snapshot; CurrentControlSet is the active one.
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Enum\\%%a\\Device Parameters\\WDF]',
+                '"IdleInWorkingState"=dword:00000000',
+                '',
+                '[HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Enum\\%%a\\Device Parameters]',
+                '"EnhancedPowerManagementEnabled"=dword:00000000',
+                '"AllowIdleIrpInD3"=dword:00000000',
+                '"DeviceSelectiveSuspended"=dword:00000000',
+                '"SelectiveSuspendEnabled"=dword:00000000',
+                '"SelectiveSuspendOn"=dword:00000000',
+                '"fid_D1Latency"=dword:00000000',
+                '"fid_D2Latency"=dword:00000000',
+                '"fid_D3Latency"=dword:00000000',
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Enum\\%%a\\Device Parameters\\WDF]', // Duplicated as per your input
+                '"IdleInWorkingState"=dword:00000000',
+                '',
+                '[HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Enum\\%%a\\Device Parameters]', // Duplicated as per your input
+                '"EnhancedPowerManagementEnabled"=dword:00000000',
+                '"AllowIdleIrpInD3"=dword:00000000',
+                '"DeviceSelectiveSuspended"=dword:00000000',
+                '"SelectiveSuspendEnabled"=dword:00000000',
+                '"SelectiveSuspendOn"=dword:00000000',
+                '',
+                // Class-specific settings, typically for display adapters or HID devices
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000]',
+                '"D3PCLatency"=dword:00000001',
+                '"F1TransitionLatency"=dword:00000001',
+                '"LOWLATENCY"=dword:00000001',
+                '"Node3DLowLatency"=dword:00000001',
+                '"PciLatencyTimerControl"=dword:00000014', // 20 in hex
+                '"RMDeepL1EntryLatencyUsec"=dword:00000001',
+                '"RmGspcMaxFtuS"=dword:00000001',
+                '"RmGspcMinFtuS"=dword:00000001',
+                '"RmGspcPerioduS"=dword:00000001',
+                '"RMLpwrEiIdleThresholdUs"=dword:00000001',
+                '"RMLpwrGrIdleThresholdUs"=dword:00000001',
+                '"RMLpwrGrRgIdleThresholdUs"=dword:00000001',
+                '"RMLpwrMsIdleThresholdUs"=dword:00000001',
+                '"VRDirectFlipDPCDelayUs"=dword:00000001',
+                '"VRDirectFlipTimingMarginUs"=dword:00000001',
+                '"VRDirectJITFlipMsHybridFlipDelayUs"=dword:00000001',
+                '"vrrCursorMarginUs"=dword:00000001',
+                '"vrrDeflickerMarginUs"=dword:00000001',
+                '"vrrDeflickerMaxUs"=dword:00000001',
+                '' // Ensure a trailing newline for proper .reg file formatting
+            ];
+
+            try {
+                const regFileContentDelayFix = regContentDelayFix.join('\r\n');
+
+                let customDelayFixFilename = customDelayFixFilenameInput.value.trim();
+                if (customDelayFixFilename === '') {
+                    customDelayFixFilename = 'mouse_delay_fix';
+                }
+                if (!customDelayFixFilename.toLowerCase().endsWith('.reg')) {
+                    customDelayFixFilename += '.reg';
+                }
+
+                downloadRegFile(regFileContentDelayFix, customDelayFixFilename, delayFixStatusMessage);
+
+            } catch (error) {
+                const currentLang = langEnBtn.classList.contains('active') ? 'en' : 'si';
+                delayFixStatusMessage.textContent = translations.downloadError[currentLang](error.message);
+                delayFixStatusMessage.classList.add('status-error', 'show');
+            }
+        });
+
+        // --- Keyboard Delay Fix Settings Generation (FIXED VALUES) ---
+        generateKeyboardDelayFixBtn.addEventListener('click', function() {
+            keyboardDelayFixStatusMessage.textContent = '';
+            keyboardDelayFixStatusMessage.classList.remove('status-success', 'status-error', 'show');
+
+            const regContentKeyboardDelayFix = [
+                'Windows Registry Editor Version 5.00',
+                '',
+                // Existing Keyboard Control Panel settings
+                '[HKEY_CURRENT_USER\\Control Panel\\Keyboard]',
+                '"InitialKeyboardDelay"="0"', // Shortest delay
+                '"KeyboardSpeed"="31"',        // Fastest repeat rate
+                '',
+                // Accessibility Settings (HKCU\Control Panel\Accessibility)
+                '[HKEY_CURRENT_USER\\Control Panel\\Accessibility\\Keyboard Response]',
+                '"Flags"="122"',
+                '',
+                '[HKEY_CURRENT_USER\\Control Panel\\Accessibility\\ToggleKeys]',
+                '"Flags"="58"',
+                '',
+                '[HKEY_CURRENT_USER\\Control Panel\\Accessibility\\StickyKeys]',
+                '"Flags"="506"',
+                '',
+                '[HKEY_CURRENT_USER\\Control Panel\\Accessibility\\MouseKeys]',
+                '"Flags"="0"',
+                '',
+                // System Services Parameters (HKLM\SYSTEM\CurrentControlSet\Services)
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\kbdclass\\Parameters]',
+                '"ThreadPriority"=dword:0000001f', // 31 in hex
+                '"KeyboardDataQueueSize"=dword:00000015', // 21 in hex
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\mouclass\\Parameters]',
+                '"MouseDataQueueSize"=dword:00000015', // 21 in hex
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\usbxhci\\Parameters]',
+                '"ThreadPriority"=dword:0000001f', // 31 in hex
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\USBHUB3\\Parameters]',
+                '"ThreadPriority"=dword:0000001f', // 31 in hex
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\nvlddmkm\\Parameters]',
+                '"ThreadPriority"=dword:0000001f', // 31 in hex
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\NDIS\\Parameters]',
+                '"ThreadPriority"=dword:0000001f', // 31 in hex
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\DXGKrnl\\Parameters]',
+                '"ThreadPriority"=dword:0000000f', // 15 in hex
+                '',
+                // Session Manager Kernel (HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel)
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel]',
+                '"DebugPollInterval"=dword:000003e8', // 1000 in hex
+                '',
+                // Image File Execution Options (HKLM\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options)
+                '[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions]',
+                '"CpuPriorityClass"=dword:00000004',
+                '"IoPriority"=dword:00000003',
+                '',
+                // Device Parameters for USB devices (Note: %%a, %%s, %%i are placeholder for batch/cmd scripts, 
+                // these keys might need specific device instance paths in a real .reg file. 
+                // For a generic .reg file, these will be literal and might not apply to all devices.
+                // It's generally safer to apply these using a script that iterates through devices if dynamic paths are needed.)
+                // I'm including them as literals as per your request, but be aware of their dynamic nature.
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Enum\\%%a\\Device Parameters]',
+                '"SelectiveSuspendOn"=dword:00000000',
+                '"SelectiveSuspendEnabled"=hex:00',
+                '"EnhancedPowerManagementEnabled"=dword:00000000',
+                '"AllowIdleIrpInD3"=dword:00000000',
+                '"DeviceSelectiveSuspended"=dword:00000000',
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Enum\\%%a\\Device Parameters\\WDF]',
+                '"IdleInWorkingState"=dword:00000000',
+                '"',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Enum\\%%s\\Device Parameters]',
+                '"SelectiveSuspendOn"=dword:00000000',
+                '"SelectiveSuspendEnabled"=hex:00',
+                '"EnhancedPowerManagementEnabled"=dword:00000000',
+                '"AllowIdleIrpInD3"=dword:00000000',
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Enum\\%%s\\Device Parameters\\WDF]',
+                '"IdleInWorkingState"=dword:00000000',
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Enum\\%%i\\Device Parameters]',
+                '"EnhancedPowerManagementEnabled"=dword:00000000',
+                '"AllowIdleIrpInD3"=dword:00000000',
+                '"EnableSelectiveSuspend"=dword:00000000',
+                '"DeviceSelectiveSuspended"=dword:00000000',
+                '"SelectiveSuspendEnabled"=dword:00000000',
+                '"SelectiveSuspendOn"=dword:00000000',
+                '"D3ColdSupported"=dword:00000000',
+                '',
+                // Additional entries repeating some of the above for '%%a' and 'ControlSet001'
+                // Note: ControlSet001 is often a snapshot; CurrentControlSet is the active one.
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Enum\\%%a\\Device Parameters\\WDF]',
+                '"IdleInWorkingState"=dword:00000000',
+                '',
+                '[HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Enum\\%%a\\Device Parameters]',
+                '"EnhancedPowerManagementEnabled"=dword:00000000',
+                '"AllowIdleIrpInD3"=dword:00000000',
+                '"DeviceSelectiveSuspended"=dword:00000000',
+                '"SelectiveSuspendEnabled"=dword:00000000',
+                '"SelectiveSuspendOn"=dword:00000000',
+                '"fid_D1Latency"=dword:00000000',
+                '"fid_D2Latency"=dword:00000000',
+                '"fid_D3Latency"=dword:00000000',
+                '',
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Enum\\%%a\\Device Parameters\\WDF]', // Duplicated as per your input
+                '"IdleInWorkingState"=dword:00000000',
+                '',
+                '[HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Enum\\%%a\\Device Parameters]', // Duplicated as per your input
+                '"EnhancedPowerManagementEnabled"=dword:00000000',
+                '"AllowIdleIrpInD3"=dword:00000000',
+                '"DeviceSelectiveSuspended"=dword:00000000',
+                '"SelectiveSuspendEnabled"=dword:00000000',
+                '"SelectiveSuspendOn"=dword:00000000',
+                '',
+                // Class-specific settings, typically for display adapters or HID devices
+                '[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000]',
+                '"D3PCLatency"=dword:00000001',
+                '"F1TransitionLatency"=dword:00000001',
+                '"LOWLATENCY"=dword:00000001',
+                '"Node3DLowLatency"=dword:00000001',
+                '"PciLatencyTimerControl"=dword:00000014', // 20 in hex
+                '"RMDeepL1EntryLatencyUsec"=dword:00000001',
+                '"RmGspcMaxFtuS"=dword:00000001',
+                '"RmGspcMinFtuS"=dword:00000001',
+                '"RmGspcPerioduS"=dword:00000001',
+                '"RMLpwrEiIdleThresholdUs"=dword:00000001',
+                '"RMLpwrGrIdleThresholdUs"=dword:00000001',
+                '"RMLpwrGrRgIdleThresholdUs"=dword:00000001',
+                '"RMLpwrMsIdleThresholdUs"=dword:00000001',
+                '"VRDirectFlipDPCDelayUs"=dword:00000001',
+                '"VRDirectFlipTimingMarginUs"=dword:00000001',
+                '"VRDirectJITFlipMsHybridFlipDelayUs"=dword:00000001',
+                '"vrrCursorMarginUs"=dword:00000001',
+                '"vrrDeflickerMarginUs"=dword:00000001',
+                '"vrrDeflickerMaxUs"=dword:00000001',
+                '' // Ensure a trailing newline for proper .reg file formatting
+            ];
+
+            try {
+                const regFileContentKeyboardDelayFix = regContentKeyboardDelayFix.join('\r\n');
+
+                let customKeyboardDelayFixFilename = customKeyboardDelayFixFilenameInput.value.trim();
+                if (customKeyboardDelayFixFilename === '') {
+                    customKeyboardDelayFixFilename = 'keyboard_fast_response';
+                }
+                if (!customKeyboardDelayFixFilename.toLowerCase().endsWith('.reg')) {
+                    customKeyboardDelayFixFilename += '.reg';
+                }
+
+                downloadRegFile(regFileContentKeyboardDelayFix, customKeyboardDelayFixFilename, keyboardDelayFixStatusMessage);
+
+            } catch (error) {
+                const currentLang = langEnBtn.classList.contains('active') ? 'en' : 'si';
+                keyboardDelayFixStatusMessage.textContent = translations.downloadError[currentLang](error.message);
+                keyboardDelayFixStatusMessage.classList.add('status-error', 'show');
+            }
+        });
+    </script>
+</body>
+</html>
